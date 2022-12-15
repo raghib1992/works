@@ -32,12 +32,12 @@
 ### Step 1: Create Task definition
 1. container name
 2. image uri = docker pull pauloclouddev/wisdom-img (docker)
-3. App Environment select fargate
+3. App Environment select EC2
 4. opertaing system
 5. cpu
 6. memory
 7. Task role select ecs task role
-8. network mode select awsvpc
+8. network mode select bridge
 
 ### Step 2: Create Task without Service
 * Deployment configuration

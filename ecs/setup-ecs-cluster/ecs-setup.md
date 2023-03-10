@@ -56,4 +56,15 @@
 * Networking
 1. vpc and subnet select the vpc created for this cluster
 2. Create/select existing  sg
+---------------------------
+
+# create ALB
+
+1. Security Group
+2. target group 
+
+3. Load balancer
+4. Listener
+IF is /ec2/*        THEN Forward to <target Group>
+image gkoenig/simplehttp
 

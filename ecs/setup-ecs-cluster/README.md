@@ -37,3 +37,39 @@ ECS cluster are logical grouping of ec2 instance
 * Ensure number of tasks desired is running across our fleet of ec2 instance
 * They can be linked to Load Balaner if needed
 * You can run tasks without service
+
+8. ECS Task Placement Strategies
+* This minimizes the number of instances in use (cost saving)
+"placementStrategy": [
+    {
+        "field": "memory",
+        "type": "binpack"
+    }
+]
+
+* Random
+"placementStrategy": [
+    {
+        "type": "random"
+    }
+]
+
+* spread
+"placementStrategy": [
+    {
+        "field": "attribute:ecs.availability-zone",
+        "type": "spread"
+    }
+]
+* distinctInstance
+* memberOf
+
+
+9. Netwroking Mode
+* none -no ext connectivity
+- Bridge (default)
+
+- Host
+
+- AWS VPC (Required for Fargate)
+

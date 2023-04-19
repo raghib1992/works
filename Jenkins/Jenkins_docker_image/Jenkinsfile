@@ -1,0 +1,481 @@
+pipeline {
+
+    agent {
+
+        label 'docker-cicd'
+
+    }
+
+
+
+    stages {
+
+        stage ('Clean Workspace'){
+
+            steps{
+
+                cleanWs()
+
+            }
+
+        }
+
+
+
+        
+
+
+
+        stage ('Checkout'){
+
+            steps {
+
+                checkout scm 
+
+            }
+
+        }
+
+
+
+        stage ('Load properties from file') {
+
+            steps {
+
+                script {
+
+                    def props = readProperties file: 'jenkins/envvar.properties'
+
+                    env.gitconfigemail = props.gitconfigemail
+
+                    env.bbcredentialid = props.bbcredentialid
+
+                    env.bbproject = props.bbproject
+
+                    env.bbserverid = props.bbserverid
+
+                    env.bbid = props.bbid
+
+
+
+                }
+
+            }
+
+        }
+
+
+
+        stage ("Build MSh docker image"){
+
+            steps {
+
+                sh'''
+
+                    cd MX
+
+                    echo "Start building docker image"
+
+                    docker build -t msh/locust -f MshLocust.Dockerfile .
+
+                    echo "successfuly created docker image"
+
+                    echo "start push image to Artifactory"
+
+                    docker tag msh/locust docker-local.itools.dev.paygateway.com/locust/msh/locust
+
+                    docker push docker-local.itools.dev.paygateway.com/locust/msh/locust
+
+                    echo "Successfully upload image to Artifactory"
+
+                '''
+
+            }
+
+        }
+
+
+
+        stage('Configure docker image version') {
+
+            steps {
+
+                script {
+
+                    // Dynamically Identify the repo link to be used to commit code back to bitbucket
+
+                    env.GIT_REPO_LINK = sh (
+
+                                           script: "git remote -v | grep push | awk '{print \$2}'",
+
+                                           returnStdout: true
+
+                                          ).trim()
+
+
+
+                    // Identify which branch corresponds to this job dynamically
+
+                   env.SELECTED_GIT_BRANCH = sh (
+
+                                                script: "echo $GIT_BRANCH | cut -d \\/ -f2",
+
+                                                returnStdout: true
+
+                                                ).trim()
+
+
+
+                   echo "selected branch name: ${SELECTED_GIT_BRANCH}"
+
+
+
+                   echo "dynamically identify the MshLocust docker image versioning"
+
+                   env.MSH_LOCUST_VER = sh (
+
+                                         script: "cat version.props | grep '<VersionPrefix>' |   sed 's/[[:space:]]//g' | sed -E 's/<.{0,1}VersionPrefix>//g'",
+
+                                         returnStdout: true
+
+                                        ).trim()
+
+
+
+                    // increment the batch before proceeding with the build step
+
+                    env.INCREMENTED_VERSION = sh (
+
+                                                 script: 'echo "${MSH_LOCUST_VER}" | gawk -F"." \'{$NF+=1}{print $0RT}\' | tr " " .',
+
+                                                 returnStdout: true
+
+                                                ).trim()
+
+
+
+                   try {
+
+                       // configure environment variables based on master branch
+
+                       if ("${SELECTED_GIT_BRANCH}" == 'master') {
+
+
+
+                           // for master branch, increment the version
+
+                           echo "incremented version to: ${INCREMENTED_VERSION}"
+
+                           env.INCREMENTED_IMAGE_VERSION = "${INCREMENTED_VERSION}"
+
+
+
+                        //    echo "configure helm chart versioning"
+
+                        //    sh "sed -i \"/appVersion:/c\\appVersion: ${INCREMENTED_IMAGE_VERSION}\" helm/Chart.yaml"
+
+                        //    sh "sed -i \"/version:/c\\version: ${INCREMENTED_IMAGE_VERSION}\" helm/Chart.yaml"
+
+
+
+                           echo "configure versioning in version.props"
+
+                           sh "sed --in-place 's/${MSH_LOCUST_VER}/${INCREMENTED_IMAGE_VERSION}/' version.props"
+
+
+
+                        //    env.ARTIFACTORY_REPO_HELMCHART = "${HELM_RELEASE_REPOSITORY}"
+
+                        //    echo "Setting helm repository to ${env.ARTIFACTORY_REPO_HELMCHART} in Artifactory"
+
+
+
+                        //    env.ARTIFACTORY_REPO_DOCKER = "docker-release-local.${GP_DNS}/${DOCKER_PATH}"
+
+                        // //    docker-local.itools.dev.paygateway.com/locust/msh/locust
+
+                        //    env.TARGET_REPO = "${DOCKER_RELEASE_REPOSITORY}"
+
+                        //    echo "Setting docker repository to ${env.ARTIFACTORY_REPO_DOCKER} in Artifactory"
+
+
+
+                        //     echo "configuring repository for helmchart chart - updating helm/values.yaml file"
+
+                        //             sh "sed -i \"/repository:/c\\  repository: ${ARTIFACTORY_REPO_DOCKER}/${APP_NAME}\" helm/values.yaml"
+
+                        }  else {
+
+                                    echo "branch selected is: ${SELECTED_GIT_BRANCH}"
+
+                        }
+
+
+
+                         //configure environment variables based on non-master branch
+
+                       if ("${SELECTED_GIT_BRANCH}" != 'master') {
+
+
+
+                           // for non-master branch, do not increment major/minor/patch, add the xxxxx-<branchname>
+
+                           echo "incremented version to: ${MSH_LOCUST_VER}-${SELECTED_GIT_BRANCH}"
+
+                           env.INCREMENTED_IMAGE_VERSION = "${MSH_LOCUST_VER}-${SELECTED_GIT_BRANCH}"
+
+
+
+                        //    echo "configure helm chart versioning"
+
+                        //    sh "sed -i \"/appVersion:/c\\appVersion: ${INCREMENTED_IMAGE_VERSION}\" helm/Chart.yaml"
+
+                        //    sh "sed -i \"/version:/c\\version: ${INCREMENTED_CHART_VERSION}\" helm/Chart.yaml"
+
+
+
+                           echo "configure versioning in version.props"
+
+                           sh "sed --in-place 's/${MSH_LOCUST_VER}/${INCREMENTED_IMAGE_VERSION}/' version.props"
+
+
+
+                //            env.ARTIFACTORY_REPO_HELMCHART = "${HELM_LOCAL_REPOSITORY}"
+
+                //            echo "Setting helm repository to ${env.ARTIFACTORY_REPO_HELMCHART}"
+
+
+
+                //            env.ARTIFACTORY_REPO_DOCKER = "${DOCKER_LOCAL_REPOSITORY}.${GP_DNS}/${DOCKER_PATH}"
+
+                //            env.TARGET_REPO = "${DOCKER_LOCAL_REPOSITORY}"
+
+                //            echo "Setting docker repository to ${env.ARTIFACTORY_REPO_DOCKER}"
+
+ 
+
+                //    echo "configuring repository for helmchart chart - updating helm/values.yaml file"
+
+                //            sh "sed -i \"/repository:/c\\  repository: ${ARTIFACTORY_REPO_DOCKER}/${APP_NAME}\" helm/values.yaml"
+
+                       } else {
+
+                           echo "branch selected is: ${SELECTED_GIT_BRANCH}"
+
+                       }
+
+                    } catch(err) {
+
+                         echo "configuring env variables when the branch is ${SELECTED_GIT_BRANCH} failed"
+
+                         currentBuild.result = 'FAILURE'
+
+                         error 'FAILURE... stage Configure Environment Variables failed ... '
+
+                    }
+
+
+
+                   // print to jenkins console log a list of jenkins env variables and locally defined env variables
+
+                   sh "env"
+
+                }
+
+            }
+
+        }
+
+
+
+        stage ('Commit Version Changes to Master') {
+
+             when {
+
+                expression {env.BRANCH_NAME == "master"}
+
+             }
+
+            steps {
+
+                script {
+
+                     wrap([$class: 'BuildUser']) {
+
+                        JOB_STARTED_BY = sh ( script: 'echo "${BUILD_USER}"', returnStdout: true).trim()
+
+                         
+
+                       echo "the job was started by: ${JOB_STARTED_BY}"
+
+                    
+
+                        if ("${JOB_STARTED_BY}" == '') {
+
+                             if ("${SELECTED_GIT_BRANCH}" == 'master') {
+
+
+
+                        echo "increment the app version in version.props"
+
+                        sh "git show-ref"
+
+
+
+                        echo "committing versioning changes to bitbucket ..."
+
+                        try {
+
+                            wrap([$class: 'BuildUser']) {
+
+                                if (BUILD_USER) {
+
+                                    sh 'echo "committer - ${BUILD_USER}"'
+
+                                    sh 'git config user.email "$BUILD_USER_EMAIL"'
+
+                                    sh 'git config user.name "$BUILD_USER"'
+
+                                }
+
+                            }
+
+                        } catch(err) {
+
+                            sh 'echo "committer - SCM TRIGGER"'
+
+                            sh 'git config user.email "${gitconfigemail}"'
+
+                            sh 'git config user.name "${gitcheckinuser}"'
+
+                        }
+
+
+
+                        sh 'git config push.default simple'
+
+                        sh 'git add version.props'
+
+
+
+                        sh 'git commit -m "[skip ci] - incrementing the app version to ${INCREMENTED_IMAGE_VERSION} in the master branch"'
+
+
+
+                        // https://support.cloudbees.com/hc/en-us/articles/360027646491-Pipeline-Equivalent-to-Git-Publisher?page=27
+
+                        withCredentials([usernamePassword(credentialsId: "${bbcredentialid}", passwordVariable: 'bbpassword', usernameVariable: 'bbuser')]) {
+
+                            sh('''
+
+                                  git branch
+
+                                  cat version.props | grep version
+
+                                  git config --local credential.helper "!f() { echo username=\\$bbuser; echo password=\\$bbpassword; }; f"
+
+                                  git push --set-upstream ${GIT_REPO_LINK} ${SELECTED_GIT_BRANCH}
+
+
+
+                              ''')
+
+                        }
+
+
+
+                        if ("${SELECTED_GIT_BRANCH}" != 'master') {
+
+                            echo "non-master branch:  no version changes were made to bitbucket"
+
+                        }
+
+                        } else {
+
+                            println "This stage is skipped as a result of job/pipeline was manually triggered"
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+
+    }
+
+
+
+        
+
+
+
+        stage ('Install Locust') {
+
+            steps {
+
+                echo 'Start -> Run docker MshLocust Container'
+
+                sh '''
+
+                    echo "Checking for existing docker container"
+
+                    for container in $(docker ps -a -q -f 'name=LocustPy'); do
+
+                        echo "removing existing container"
+
+                        docker rm -f $container
+
+                    done
+
+
+
+
+
+                    echo "checking for existing Locust Volume"
+
+                    if docker volume ls --filter name=locust-vol | grep -q locust-vol
+
+                    then
+
+                        echo "docker volume locust-vol is available"
+
+                    else
+
+                        
+
+                        echo "creating new docker volume"
+
+                        docker volume create locust-vol
+
+                    fi
+
+
+
+                    
+
+                    docker run -d -p 8282:8383 --name LocustPy -v locust-vol:/home/locust docker-local.itools.dev.paygateway.com/locust/msh/locust -f /home/locust/locustModules/locustfile.py --csv=Output
+
+                '''
+
+                echo "successfully run docker conainer"
+
+            }
+
+        }
+
+    }
+
+    post{
+
+        always {
+
+            cleanWs()
+
+        }
+
+    }
+
+}

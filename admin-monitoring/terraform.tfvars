@@ -1,0 +1,1 @@
+SC_PURPOSE = "saas-global"

@@ -1,6 +1,10 @@
 pipeline {
 //   agent { label 'linux'}
   agent any
+
+  tools {
+    terraform 'Terraform'
+  }
   options {
     skipDefaultCheckout(true)
   }
@@ -18,8 +22,8 @@ pipeline {
     stage('terraform') {
       steps {
         dir('terrascan'){
-            sh 'chmod +x terraformw'
-            sh './terraformw apply -auto-approve -no-color'
+            sh 'terraform init'
+            // sh './terraform apply -auto-approve -no-color'
         }
       }
     }

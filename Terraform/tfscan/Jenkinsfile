@@ -22,13 +22,13 @@ pipeline {
     }
 
     stage('tfsec') {
-      agent {
-        docker { 
-          // image 'tfsec/tfsec-ci:v0.57.1' 
-          // reuseNode true
-          label 'tfsec'
-        }
-      }
+      // agent {
+      //   docker { 
+      //     // image 'tfsec/tfsec-ci:v0.57.1' 
+      //     // reuseNode true
+      //     label 'tfsec'
+      //   }
+      // }
       steps {
         dir ('Terraform/tfscan'){
           sh '''

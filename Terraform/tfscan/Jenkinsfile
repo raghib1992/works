@@ -6,9 +6,9 @@ pipeline {
     terraform 'Terraform'
     git 'Default'
   }
-  options {
-    skipDefaultCheckout(true)
-  }
+  // options {
+  //   skipDefaultCheckout(true)
+  // }
   stages{
     stage('clean workspace') {
       steps {
@@ -46,9 +46,9 @@ pipeline {
       }
     }
   }
-  post {
-    always {
-      cleanWs()
-    }
-  }
+  // post {
+  //   always {
+  //     cleanWs()
+  //   }
+  // }
 }

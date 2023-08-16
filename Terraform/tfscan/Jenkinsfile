@@ -4,7 +4,7 @@ pipeline {
 
   tools {
     terraform 'Terraform'
-    docker 'Docker'
+    git 'Default'
   }
   options {
     skipDefaultCheckout(true)

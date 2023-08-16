@@ -21,7 +21,7 @@ pipeline {
     }
     stage('terraform') {
       steps {
-        dir('terrascan'){
+        dir('Terraform/tfscan'){
             sh 'terraform init'
             sh 'terraform apply -auto-approve -no-color'
         }

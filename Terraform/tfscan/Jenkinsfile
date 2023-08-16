@@ -1,6 +1,6 @@
 pipeline {
-  // agent { label 'tfsec'}
-  agent any
+  agent { label 'tfsec'}
+  // agent any
 
   tools {
     terraform 'Terraform'

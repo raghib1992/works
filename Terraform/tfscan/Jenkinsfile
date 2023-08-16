@@ -4,6 +4,7 @@ pipeline {
 
   tools {
     terraform 'Terraform'
+    docker 'Docker'
   }
   options {
     skipDefaultCheckout(true)
@@ -28,9 +29,11 @@ pipeline {
       //   }
       // }
       steps {
-        sh '''
-          docker run --rm -it -v "$(pwd):/src" aquasec/tfsec  /src --no-color
-        '''
+        dir ('Terraform/tfscan'){
+          sh '''
+            docker run --rm -it -v "$(pwd):/src" aquasec/tfsec  /src --no-color
+          '''
+        }
       }
     }
 

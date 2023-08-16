@@ -31,3 +31,4 @@ pipeline {
   }
 }
 ```
+### 4. Install **Docker Pipeline** Plugins

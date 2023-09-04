@@ -10,12 +10,6 @@ eksctl utils associate-iam-oidc-provider --region=ap-south-1 --cluster=jenkins-e
 # Create serviceAccount
 eksctl create iamserviceaccount --attach-policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser --cluster jenkins-eks-fg-raghib --name jenkins-sa-ecr-raghib --namespace default --override-existing-serviceaccounts --region ap-south-1 --approve
 
-
-
-
-
-
-
 ################# 9th Oct 2021 ###############
 
 #### Create iam role with name 

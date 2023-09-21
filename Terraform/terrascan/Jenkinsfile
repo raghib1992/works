@@ -1,0 +1,111 @@
+pipeline {
+    agent {
+        label 'terrascan'
+    }
+
+    
+    parameters {
+        // to select to run docker scan stage
+        booleanParam (
+            name: 'Docker-Scan',
+            defaultValue: false,
+            description: 'Scan Dockerfile'
+        )
+        // to select to run terraform script scan stage
+        booleanParam (
+            name: 'Terraform-Scan',
+            defaultValue: false,
+            description: 'Scan terraform Script'
+        )
+        // enter the repo url
+        string(
+            name: 'RemoteURL',
+            defaultValue: 'https://gitlab.dev.paygateway.com/cayan/genius-splunk.git',
+            description: 'Enter the remote repo url'
+        )
+        // enter remote repo branch
+        string(
+            name: 'Branch',
+            defaultValue: 'master',
+            description: 'Enter the branch'
+        )
+        // select credentials of remote repo
+        choice(choices: ['Gitlab_Jenkins', 'jenkins_bitBucket_user'], description: 'Select credentials for remote repo', name: 'Credentials')       
+
+    }
+    
+    stages {    
+
+        stage ('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage ('Checkout Remote SCM For Scanning') {
+            steps {
+                git  branch: params.Branch, credentialsId: params.Credentials, url: params.RemoteURL
+            }
+        }
+
+        stage('scanning terraform script') {
+            when {
+                environment name: 'Terraform-Scan', value: 'true'
+            }
+            steps {
+                catchError {
+                    echo "Running terrascan Process ---> Start"
+                    sh'''
+                        terrascan scan -t aws -i terraform | tee terraform-scan.html
+                        ls -la
+                    '''
+                    echo "Terrascan process finish successfully"
+                }
+            }
+            post {
+                always {
+                    publishHTML (target : [allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: './',
+                    reportFiles: 'terraform-scan.html',
+                    reportName: 'Terraform-Reports',
+                    reportTitles: 'Terraform-Report'])
+                }
+            }
+        }
+        
+        stage('scanning docker script'){
+            when {
+                // To scan dockerfile
+                environment name: 'Docker-Scan', value: 'true'
+            }
+            steps {
+                catchError {
+                    echo "Running terrascan Process ---> Start"
+                    sh '''
+                        terrascan scan -i docker | tee docker-scan.html
+                    '''
+                    echo "Docker scanning proccess completed"
+                }
+                
+            }
+            post {
+                always {
+                    publishHTML (target : [allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: './',
+                    reportFiles: 'docker-scan.html',
+                    reportName: 'Docker-Reports',
+                    reportTitles: 'Docker-Report'])
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}

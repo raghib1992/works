@@ -9,3 +9,5 @@
 - bitbucket
 - harbor
 - grafana
+- prometheus
+- Weights & Biases

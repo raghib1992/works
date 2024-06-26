@@ -1,0 +1,144 @@
+apiVersion: milvus.io/v1beta1
+kind: Milvus
+metadata:
+  name: milvus-raghib
+  labels:
+    app: milvus
+spec:
+  mode: cluster
+  components:
+    image: harbor.csis.astrazeneca.net/milvusdb/milvus:v2.1.0
+    # resources:
+    #   limits:
+    #     cpu: '4'
+    #     memory: 8Gi
+    #   requests:
+    #     cpu: 200m
+    #     memory: 512Mi
+    # rootCoord: 
+    #   replicas: 1
+    #   port: 8080
+    #   resources:
+    #     limits:
+    #       cpu: '6'
+    #       memory: '10Gi'
+    # dataCoord: {}
+    # queryCoord: {}
+    # indexCoord: {}
+    # dataNode: {}
+    # indexNode: {}
+    # queryNode: {}
+    # proxy:
+    #   replicas: 1
+    #   serviceType: ClusterIP
+    #   resources:
+    #     limits:
+    #       cpu: '2'
+    #       memory: 4Gi
+    #     requests:
+    #       cpu: 100m
+    #       memory: 128Mi
+  config:
+    minio:
+      # your bucket name
+      bucketName: az-eu-azimuth-kfp-dev
+      # Optional, config the prefix of the bucket milvus will use
+      rootPath: milvus/milvus-raghib
+      useSSL: true
+  dependencies:
+    storage:
+      # enable external object storage
+      external: true
+      type: S3 # MinIO | S3
+      # the endpoint of AWS S3
+      endpoint: s3.amazonaws.com:443
+      # the secret storing the access key and secret key
+      secretRef: "mlpipeline-minio-artifact"
+      # inCluster:
+      #   deletionPolicy: Delete
+      #   pvcDeletion: true
+    etcd:
+      inCluster:
+        values:
+          replicaCount: 1
+          image:
+            registry: harbor.csis.astrazeneca.net
+            repository: milvusdb/etcd
+            tag: 3.5.5-r4
+        deletionPolicy: Delete
+        pvcDeletion: true
+    pulsar:
+      inCluster:
+        deletionPolicy: Delete
+        pvcDeletion: true
+        values:
+          images:
+            zookeeper:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: 2.7.4
+              pullPolicy: IfNotPresent
+            bookie:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: 2.7.4
+              pullPolicy: IfNotPresent
+            autorecovery:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: 2.7.4
+              pullPolicy: IfNotPresent
+            broker:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: 2.7.4
+              pullPolicy: IfNotPresent
+            proxy:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: 2.7.4
+              pullPolicy: IfNotPresent
+            # functions:
+            #   repository: apachepulsar/pulsar-all
+            #   tag: 2.7.4
+            # prometheus:
+            #   repository: prom/prometheus
+            #   tag: v2.17.2
+            #   pullPolicy: IfNotPresent
+            # grafana:
+            #   repository: streamnative/apache-pulsar-grafana-dashboard-k8s
+            #   tag: 0.0.10
+            #   pullPolicy: IfNotPresent
+            pulsar_manager:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              # tag: v0.1.0
+              pullPolicy: IfNotPresent
+              hasCommand: false
+          monitoring:
+            # monitoring - prometheus
+            prometheus: false
+            # monitoring - grafana
+            grafana: false
+            # monitoring - node_exporter
+            node_exporter: false
+            # alerting - alert-manager
+            alert_manager: false
+          components:
+            autorecovery: false
+          zookeeper:
+            replicaCount: 1
+          bookkeeper:
+            replicaCount: 1
+            resoureces:
+              limit:
+                cpu: '4'
+              memory: 8Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          broker:
+            replicaCount: 1
+            configData:
+              ## Enable `autoSkipNonRecoverableData` since bookkeeper is running
+              ## without persistence
+              autoSkipNonRecoverableData: "true"
+              managedLedgerDefaultEnsembleSize: "1"
+              managedLedgerDefaultWriteQuorum: "1"
+              managedLedgerDefaultAckQuorum: "1"
+          proxy:
+            replicaCount: 1

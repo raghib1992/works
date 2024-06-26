@@ -1,0 +1,134 @@
+apiVersion: milvus.io/v1beta1
+kind: Milvus
+metadata:
+  name: milvus-demo
+  labels:
+    app: milvus
+spec:
+  mode: cluster
+  components:
+    image: harbor.csis.astrazeneca.net/milvusdb/milvus:v2.1.0
+    # either
+    mixCoord:
+      replicas: 1
+    # or
+    dataCoord:
+      # resources:
+      #   limits:
+      #     cpu: "0.5"
+      #     memory: 2Gi
+    queryCoord:
+      # resources:
+      #   limits:
+      #     cpu: "0.5"
+      #     memory: 2Gi
+    rootCoord:
+      # resources:
+      #   limits:
+      #     cpu: 1
+      #     memory: 2Gi
+    dataNode:
+      replicas:  1
+      # resources:
+      #   limits:
+      #     cpu: 1
+      #     memory: 4Gi
+    indexNode:
+      replicas: 1
+      # resources:
+      #   limits:
+      #     cpu: 4
+      #     memory: 8Gi
+    queryNode:
+      replicas: 1
+      # resources:
+      #   limits:
+      #     cpu: 1
+      #     memory: 4Gi
+    proxy:
+      replicas: 1
+      # resources:
+      #   limits:
+      #     cpu: 1
+      #     memory: 4Gi
+  config:
+    minio:
+      bucketName: az-eu-azimuth-kfp-dev
+      rootPath: milvus/milvus-raghib
+
+  dependencies:
+    storage:
+      external: true
+      type: S3
+      endpoint: s3.eu-west-1.amazonaws.com
+      secretRef: "mlpipeline-minio-artifact"
+    etcd:
+      inCluster:
+        values:
+          replicaCount: 1
+          image:
+            registry: harbor.csis.astrazeneca.net
+            repository: milvusdb/etcd
+            tag: 3.5.5-r4
+        deletionPolicy: Delete
+        pvcDeletion: true
+    pulsar:
+      inCluster:
+        deletionPolicy: Delete
+        pvcDeletion: true
+        values:
+          images:
+            zookeeper:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+            bookie:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+            autorecovery:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+            broker:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+            proxy:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+            pulsar_manager:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+              hasCommand: false
+          monitoring:
+            prometheus: false
+            grafana: false
+            node_exporter: false
+            alert_manager: false
+          components:
+            zookeeper: true
+            # bookkeeper
+            bookkeeper: true
+            # bookkeeper - autorecovery
+            autorecovery: true
+            # broker
+            broker: true
+            # functions
+            functions: function
+            # proxy
+            proxy: true
+            # toolset
+            toolset: false
+            # pulsar manager
+            pulsar_manager: true
+          pulsar_metadata:
+            component: pulsar-init
+            image:
+              repository: harbor.csis.astrazeneca.net/apachepulsar/pulsar
+          zookeeper:
+            replicaCount: 1
+            annotations:
+              sidecar.istio.io/inject: "false"
+          bookkeeper:
+            annotations:
+              sidecar.istio.io/inject: "false"
+            replicaCount: 1
+          broker:
+            annotations:
+              sidecar.istio.io/inject: "false"
+            replicaCount: 1
+          proxy:
+            annotations:
+              sidecar.istio.io/inject: "false"
+            replicaCount: 1

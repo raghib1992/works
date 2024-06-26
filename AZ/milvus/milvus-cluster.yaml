@@ -1,0 +1,15 @@
+apiVersion: milvus.io/v1alpha1
+kind: MilvusCluster
+metadata:
+  name: milvus-raghib
+spec:
+  replicas: 1
+  image:
+    repository: harbor.csis.astrazeneca.net/milvusdb/milvus:v2.1.0
+    # tag: latest
+  etcd:
+    size: 1
+  pulsar:
+    size: 1
+  minio:
+    size: 1

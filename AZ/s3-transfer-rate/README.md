@@ -3,29 +3,32 @@
 ```sh
 kubectl --kubeconfig -n brown-dev-001 get secret
 kubectl --kubeconfig dev -n brown-dev-001 get secret mlpipeline-minio-artifact -o yaml
+kubectl -n brown-dev-001 get secret mlpipeline-minio-artifact -o yaml
 ```
 
 ### From secret get encoded accesskey and secretkey file
 ```t
-accesskey: QUtJXXXXXXXXTVpFUFk=
-secretkey: THAwRXXXXXXXXXXXdzOFNSU1Y4OQ==
+accesskey: QUtJXXXXXXXXXXXXzTVpFUFk=
+secretkey: THAwXXXXXXXXXX4OQ==
 ```
 
 ### Decode access key and secret key
 ```sh
-echo QUtJQXXXXXXXXXXczTVpFUFk= | base64 --decode
-echo THAw###kUxRXhXXXXXXXXXXXVdzOFNSU1Y4OQ== | base64 --decode
+echo QUtJQVXXXXXXXXXXXXXXXXXXXXpFUFk= | base64 --decode
+echo THAwRXXXXXXXXXXXXXXXXXXXxQVdzOFNSU1Y4OQ== | base64 --decode
 ```
 
 ### Now you have decoded access and secret file
 ```t
-AKIAXXXXXXXXMZEPY
-Lp0G3XXXXXXXXXXXXXSAWs8SRSV89
+AKXXXXXXXXXX3MZEPY
+Lp0XXXXXXXXXXXXXXXXXXXXXXWs8SRSV89
 eu-west-1
 ```
 
 ### Create awscli dev profile using above cred
-
+```
+aws configure --profile dev
+```
 ### get proxy in one server with amazon
 ```sh
 echo $no_proxy
@@ -34,17 +37,26 @@ export no_proxy=10.0.0.0/8,172.29.0.0/8,astrazeneca.net,localhost,127.0.0.1,::1
 
 ### get proxy in another server with amazon
 ```sh
-export no_proxy=$no_proxy,amazonaws.com
+export no_proxy=$no_proxy,amazonaws.com,.kubeflow
+echo $no_proxy
+```
+### Download test file
+```
+curl -LO https://testfile.org/file-1GB
+mv file-1GB test-file.zip
 ```
 
 ### set var for brnach name and file name
 ```sh
 BUCKET=az-eu-azimuth-kfp-dev/artifacts/brown-dev-001
 FILE=test-file.zip
+
+echo $BUCKET
+echo $FILE
 ```
 
 ### Create test script 
-- name s3-cp-speed-test.sh
+- name: **s3-cp-speed-test.sh**
 ```sh
 #! /bin/bash
 #Author : Kiran Murugulla
@@ -105,3 +117,18 @@ server 2
 10.0.0.0/8,172.29.0.0/8,astrazeneca.net,localhost,127.0.0.1,::1,amazonaws.com
 File test-file.zip of size 524288000 bytes copied to s3 Bucket az-eu-azimuth-kfp-dev/artifacts/brown-dev-001 in : 0 min 23 sec 
 ```
+
+edit no_proxy value in azimuth-images/.github/workflows/main.workflow.yaml
+```
+env:
+  ## Sets environment variable for internet access
+  http_proxy: http://azpzen.astrazeneca.net:9480
+  https_proxy: http://azpzen.astrazeneca.net:9480
+  no_proxy: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net
+```
+Change no_proxy value in azimuth-images Azimuth 
+merge PR
+Rebuild in demo
+restart workbeanch
+test transfer rate gain
+Create Blog

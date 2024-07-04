@@ -1,0 +1,111 @@
+apiVersion: milvus.io/v1beta1
+kind: Milvus
+metadata:
+  name: milvus-raghib
+  labels:
+    app: milvus
+spec:
+  mode: cluster
+  dependencies:
+    storage:
+      external: true
+      type: S3
+      endpoint: s3.eu-west-1.amazonaws.com:443
+      # endpoint: s3.amazonaws.com:443
+      secretRef: "mlpipeline-minio-artifact"
+    etcd:
+      inCluster:
+        values:
+          # extraEnvVars:
+          # - name: http_proxy
+          #   value: "http://azpse.raghib.net:9480"
+          # - name: https_proxy
+          #   value: "http://azpse.raghib.net:9480"
+          # - name: no_proxy
+          #   value: "10.0.0.0/8,172.29.0.0/8,raghib.net,localhost,127.0.0.1,::1,.kubeflow"
+          replicaCount: 1
+          annotations:
+              sidecar.istio.io/inject: "false"
+          image:
+            registry: docker.io
+            repository: milvusdb/etcd
+            tag: 3.5.5-r4
+        deletionPolicy: Delete
+        pvcDeletion: true
+    pulsar:
+      inCluster:
+        deletionPolicy: Delete
+        pvcDeletion: true
+        values:
+          extraEnvVars:
+          - name: http_proxy
+            value: "http://azpse.raghib.net:9480"
+          - name: https_proxy
+            value: "http://azpse.raghib.net:9480"
+          - name: no_proxy
+            value: "10.0.0.0/8,172.29.0.0/8,raghib.net,localhost,127.0.0.1,::1,.kubeflow"
+          images:
+            zookeeper:
+              repository: docker.io/apachepulsar/pulsar
+              pullPolicy: IfNotPresent
+            bookie:
+              repository: docker.io/apachepulsar/pulsar
+              pullPolicy: IfNotPresent
+            autorecovery:
+              repository: docker.io/apachepulsar/pulsar
+              pullPolicy: IfNotPresent
+            broker:
+              repository: docker.io/apachepulsar/pulsar
+              pullPolicy: IfNotPresent
+            proxy:
+              repository: docker.io/apachepulsar/pulsar
+              pullPolicy: IfNotPresent
+            pulsar_manager:
+              repository: docker.io/apachepulsar/pulsar-manager
+              pullPolicy: IfNotPresent
+              hasCommand: false
+          monitoring:
+            prometheus: false
+            grafana: false
+            node_exporter: false
+            alert_manager: false
+          components:
+            autorecovery: true
+            bookkeeper: true
+            broker: true
+            pulsar_manager: true
+            zookeeper: true
+            functions: false
+            proxy: true
+            toolset: false
+          pulsar_metadata:
+            component: pulsar-init
+            image:
+              repository: docker.io/apachepulsar/pulsar
+          zookeeper:
+            replicaCount: 3
+            annotations:
+              sidecar.istio.io/inject: "false"
+          bookkeeper:
+            replicaCount: 3
+            annotations:
+              sidecar.istio.io/inject: "false"
+          broker:
+            replicaCount: 1
+            annotations:
+              sidecar.istio.io/inject: "false"
+          proxy:
+            replicaCount: 1
+            annotations:
+              sidecar.istio.io/inject: "false"
+          pulsar_manager:
+            replicaCount: 1
+            annotations:
+              sidecar.istio.io/inject: "false"
+  components:
+    image: docker.io/milvusdb/milvus:v2.1.0
+  config:
+    minio:
+      bucketName: az-eu-azimuth-kfp-dev
+      useSSL: true
+      # rootPath: milvus/milvus-raghib

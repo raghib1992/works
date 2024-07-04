@@ -1,0 +1,93 @@
+spec:
+  components:
+    # Components specifications
+
+    # Components global specifications
+
+    # Enable rolling update, supported in milvus v2.2.3.
+    # For compatity reason defaults to false, but we suggest you to enable it if you are using milvus v2.2.3 or above.
+    enableRollingUpdate: true # Optional default=false
+
+    # imageUpdateMode is the mode when update components' image.
+    # rollingUpgrade: to update the components' image in the order of coords -> nodes -> proxy
+    # rollingDowngrade: to update the components' image in the order of proxy -> nodes -> coords
+    # all: to update all the components' image rightaway.
+    # one of rollingUpgrade / rollingDowngrade / all
+    imageUpdateMode: rollingUpgrade # Optional default=rollingUpgrade
+
+    # Paused is used to pause all components' deployment rollout
+    paused: false # Optional
+
+    # Global pod labels.
+    podLabels: # Optional
+      key: value
+    
+    # Global pod annotations.
+    podAnnotations: # Optional
+      key: value
+
+    # Global image name for milvus components. It will override the default one. Default is determined by operator version
+    image: milvusdb/milvus:latest # Optional
+
+    # Global image pull policy. It will override the the default one.
+    imagePullPolicy: IfNotPresent # Optional, default = IfNotPresent
+
+    # Global image pull secrets.
+    imagePullSecrets: # Optional
+    - name: mySecret
+    # Global environment variables
+    env: # Optional
+    - name: key
+      value: value
+
+    # Global nodeSelector.
+    # NodeSelector is a selector which must be true for the component to fit on a node.
+    # Selector which must match a node's labels for the pod to be scheduled on that node.
+    # More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/
+    nodeSelector: # Optional
+      key: value
+
+    # Global tolerations.
+    # If specified, the pod's tolerations.
+    # More info: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    tolerations: {} # Optional
+    
+    # Global compute resources required.
+    # Compute Resources required by this component.
+    # Cannot be updated.
+    # More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+    resources: # Optional
+      # Limits describes the maximum amount of compute resources allowed.
+      # More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+      limits: {} # Optional
+      # Requests describes the minimum amount of compute resources required.
+      # If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+      # otherwise to an implementation-defined value.
+      # More info: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+      requests: {} # Optional
+
+    # Global volumes for all components 
+    # More info: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#volume-v1-core
+    volumes: [] # Optional
+    
+    # Global volumeMounts.
+    # More info: https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.21/#volumemount-v1-core
+    VolumeMounts: [] # Optional
+
+    # Global serviceAccountName.
+    serviceAccountName: "" # Optional
+
+    # Disable metrics collection for all components
+    disableMetrics: false # Optional
+
+    # The interval of podmonitor metric scraping in string
+    metricInterval : "30s" # Optional
+
+    # ToolImage specify tool image to merge milvus config to original one in image, default uses same image as milvus-operator
+    toolImage: "" # Optional
+
+    # UpdateToolImage specifies when milvus-operator upgraded, whether milvus should restart to update the tool image, too
+    updateToolImage: false # Optional
+
+    # Components private specifications
+    # ... Skipped fields

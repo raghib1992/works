@@ -9,21 +9,8 @@ spec:
   # annotations:
   #   sidecar.istio.io/inject: "false"
   dependencies:
-    storage:
-      external: true
-      type: S3
-      endpoint: s3.amazonaws.com:443
-      secretRef: "mlpipeline-minio-artifact"
-    etcd:
-      inCluster:
-        values:
-          replicaCount: 1
-          image:
-            registry: harbor.csis.astrazeneca.net
-            repository: milvusdb/etcd
-            tag: 3.5.5-r4
-        deletionPolicy: Delete
-        pvcDeletion: true
+    storage: {}
+    etcd: {}
     msgStreamType: "kafka"
     kafka:
       inCluster:
@@ -38,11 +25,5 @@ spec:
           replicaCount: 1
           zookeeper:
             replicaCount: 1
-  components:
-    image: harbor.csis.astrazeneca.net/milvusdb/milvus:v2.1.0
-  config:
-    minio:
-      bucketName: az-eu-azimuth-kfp-dev
-      # config the prefix of the bucket milvus will use
-      rootPath: milvus/milvus-raghib
-      useSSL: true
+  components: {}
+  config: {}

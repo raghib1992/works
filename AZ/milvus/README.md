@@ -261,3 +261,82 @@ spec:
       rootPath: milvus/brown-dev-001
       useSSL: true
 ```
+
+### Step 5: Test milvus db using python SDK
+- Install virtual environment for pyhton
+```sh
+pip install virtualenv
+```
+- Create virtual env in required folder
+```sh
+python -m venv milvus
+```
+- Start virtual env
+```sh
+milvus\Scripts\activate
+``` 
+- Install package
+```sh
+pip install pymilvus==2.4.0  jupyterlab protobuf==3.20.0
+```
+- start jupyterlab
+```
+jupyter-lab
+```
+- Test process
+```py
+from pymilvus import Collection, FieldSchema, CollectionSchema, DataType, connections, utility
+
+connections.connect(
+    host='localhost',
+    # port frwrd to 12321
+    port='12321'
+)
+
+utility.list_collections()
+
+## Field Schema
+song_name = FieldSchema(
+  name="song_name",
+  dtype=DataType.VARCHAR,
+  max_length=200,
+)
+song_id = FieldSchema(
+  name="song_id",
+  dtype=DataType.INT64,
+  is_primary=True,
+)
+listen_count = FieldSchema(
+  name="listen_count",
+  dtype=DataType.INT64,
+)
+song_vec = FieldSchema(
+  name="song_vec",
+  dtype=DataType.FLOAT_VECTOR,
+  dim=64
+)
+song_json = FieldSchema(
+  name="song_json",
+  dtype=DataType.JSON
+)
+song_array = FieldSchema(
+  name='song_array', dtype=DataType.ARRAY,
+  element_type=DataType.INT64,
+  max_capacity=900
+)
+
+# Collection schema
+collection_schema = CollectionSchema(
+  fields=[song_name, song_id, listen_count, song_vec, song_json, song_array],
+  description="Album Songs"
+)
+
+# Create collection
+collection = Collection(
+    name="Album1",
+    schema=collection_schema,
+    using='default'
+)
+
+utility.list_collections()
+```

@@ -1,0 +1,1 @@
+jinja2 milvus.j2 milvus_name=my-app namespace=brown-dev-001 aws_secret=mlpipeline-minio-artifact etcd_url=milvus-etcd.milvus-operator.svc.cluster.local etcd_port=2379 pulsar_url=milvus-pulsar-proxy.milvus-operator.svc.cluster.local pulsar_port=6650 milvus_image=harbor.csis.astrazeneca.net/milvusdb/milvus milvus_image_version=v2.4.0 > deployment.yaml

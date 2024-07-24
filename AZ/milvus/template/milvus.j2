@@ -1,0 +1,37 @@
+apiVersion: milvus.io/v1beta1
+kind: Milvus
+metadata:
+  name: {{ milvus_name }}
+  namespace: {{ namespace }}
+  labels:
+    app: milvus
+spec:
+  mode: cluster
+  dependencies:
+    storage:
+      external: true
+      type: S3
+      endpoint: s3.eu-west-1.amazonaws.com:443
+      secretRef: "{{ aws_secret }}"
+    etcd:
+      external: true
+      endpoints: ["{{ etcd_url }}:{{ etcd_port }}"]
+    pulsar:
+      external: true
+      endpoint: "{{ pulsar_url }}:{{ pulsar_port }}"
+  components:
+    image: {{ milvus_image }}:{{ milvus_image_version }}
+    podAnnotations:
+      sidecar.istio.io/inject: "false"
+    proxy:
+      serviceType: ClusterIP
+  config:
+    etcd:
+      rootPath: {{ namespace }}
+    minio:
+      bucketName: az-eu-azimuth-kfp-dev
+      rootPath: "artifacts/{{ namespace }}/milvus"
+      useSSL: true
+    common:
+      security:
+        authorizationEnabled: true

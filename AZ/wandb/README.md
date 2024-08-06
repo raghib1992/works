@@ -13,9 +13,9 @@ import requests
 #     host='https://dev-azimuth-wandb.paas-brown.astrazeneca.net/'
 # )
 TOKEN = {
-  "Authorization": f"Bearer {'local-d318e3cc0363420498089fa092675aa0b80e17be'}"
+  "Authorization": f"Bearer {'local-d318e3cc00e17be'}"
 }
-api_url = "https://dev-azimuth-wandb.paas-brown.astrazeneca.net/scim"
+api_url = "https://dev-wandb.paas-brown.astrazeneca.net/scim"
 # Initialize the W&B API
 # api = wandb.Api()
 

@@ -1,0 +1,19 @@
+{%- for pvc in all_claims -%}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+    - kubernetes.io/pvc-protection
+  name: {{ pvc.metadata.name }}
+  namespace: {{ pvc.metadata.namespace}}
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ pvc.spec.resources.requests.storage }}
+  storageClassName: {{ pvc.spec.storageClassName }}
+  volumeMode: {{ pvc.spec.volumeMode }}
+  volumeName: {{ pvc.spec.volumeName }}
+{% endfor %}

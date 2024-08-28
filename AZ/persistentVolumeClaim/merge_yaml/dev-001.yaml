@@ -1,0 +1,511 @@
+---
+apiVersion: kubeflow.org/v1beta1
+kind: Profile
+metadata:
+  name: brown-dev-001
+spec:
+  owner:
+    kind: User
+    name: nithin.rajan@astrazeneca.com
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    role: edit
+    user: maryhelenarose.a@astrazeneca.com   # replace with the email of the user from your Active Directory case sensitive
+  name: user-maryhelenarose-a-astrazeneca-com-clusterrole-edit
+  # Ex: if the user email is lalith.vaka@kp.org the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  # Note: if the user email is Lalith.Vaka@kp.org from your Active Directory, the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  namespace: brown-dev-001  # replace with the namespace/profile name that you are adding contributors to
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeflow-edit
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: maryhelenarose.a@astrazeneca.com
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  annotations:
+    role: edit
+    user: maryhelenarose.a@astrazeneca.com  # replace with the email of the user from your Active Directory case sensitive
+  name: user-maryhelenarose-a-astrazeneca-com-clusterrole-edit
+  namespace: brown-dev-001  # replace with the namespace/profile name that you are adding contributors to
+spec:
+  action: ALLOW
+  rules:
+    - when:
+        - key: request.headers[kubeflow-userid]  # for GCP, use x-goog-authenticated-user-email instead of kubeflow-userid for authentication purpose
+          values:
+            - maryhelenarose.a@astrazeneca.com
+---
+# Adding Azimuth FA
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    role: edit
+    user: azimuth1@astrazeneca.com   # replace with the email of the user from your Active Directory case sensitive
+  name: user-azimuth1-astrazeneca-com-clusterrole-edit
+  # Ex: if the user email is lalith.vaka@kp.org the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  # Note: if the user email is Lalith.Vaka@kp.org from your Active Directory, the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  namespace: brown-dev-001  # replace with the namespace/profile name that you are adding contributors to
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeflow-edit
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: azimuth1@astrazeneca.com
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  annotations:
+    role: edit
+    user: azimuth1@astrazeneca.com  # replace with the email of the user from your Active Directory case sensitive
+  name: user-azimuth1-astrazeneca-com-clusterrole-edit
+  namespace: brown-dev-001  # replace with the namespace/profile name that you are adding contributors to
+spec:
+  action: ALLOW
+  rules:
+    - when:
+        - key: request.headers[kubeflow-userid]  # for GCP, use x-goog-authenticated-user-email instead of kubeflow-userid for authentication purpose
+          values:
+            - azimuth1@astrazeneca.com
+---
+# Adding AI Support NP account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    role: edit
+    user: enterpriseaisupport@astrazeneca.com   # replace with the email of the user from your Active Directory case sensitive
+  name: user-enterpriseaisupport-astrazeneca-com-clusterrole-edit
+  # Ex: if the user email is lalith.vaka@kp.org the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  # Note: if the user email is Lalith.Vaka@kp.org from your Active Directory, the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  namespace: brown-dev-001    # replace with the namespace/profile name that you are adding contributors to
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeflow-edit
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: enterpriseaisupport@astrazeneca.com
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  annotations:
+    role: edit
+    user: enterpriseaisupport@astrazeneca.com  # replace with the email of the user from your Active Directory case sensitive
+  name: user-enterpriseaisupport-astrazeneca-com-clusterrole-edit
+  namespace: brown-dev-001  # replace with the namespace/profile name that you are adding contributors to
+spec:
+  action: ALLOW
+  rules:
+    - when:
+        - key: request.headers[kubeflow-userid]  # for GCP, use x-goog-authenticated-user-email instead of kubeflow-userid for authentication purpose
+          values:
+            - enterpriseaisupport@astrazeneca.com
+---
+# Proxy setting for internet outbound access
+apiVersion: "kubeflow.org/v1alpha1"
+kind: PodDefault
+metadata:
+  name: default
+  namespace: brown-dev-001
+spec:
+  selector:
+    matchLabels:
+      default: "true"
+  desc: "default"
+  volumes:
+    - name: volume-kf-pipeline-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 7200
+              audience: pipelines.kubeflow.org
+  volumeMounts:
+    - mountPath: /var/run/secrets/kubeflow/pipelines
+      name: volume-kf-pipeline-token
+      readOnly: true
+  env:
+    - name: KF_PIPELINES_SA_TOKEN_PATH
+      value: /var/run/secrets/kubeflow/pipelines/token
+    - name: http_proxy
+      value: http://azpse.astrazeneca.net:9480
+    - name: https_proxy
+      value: http://azpse.astrazeneca.net:9480
+    - name: no_proxy
+      value: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net,localhost,127.0.0.1,::1,.kubeflow,amazonaws.com,.snowflakecomputing.com
+---
+
+apiVersion: v1
+data:
+  defaultPipelineRoot: s3://az-eu-azimuth-kfp-dev/artifacts/brown-dev-001
+kind: ConfigMap
+metadata:
+  name: kfp-launcher
+  namespace: brown-dev-001
+---
+# Allowing github runner to deploy website
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: azimuth-docs-deployment-role
+  namespace: azimuth-docs
+rules:
+  - apiGroups: ["", "apps"]
+    resources: ["deployments", "pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: azimuth-docs-deployment-role-binding
+  namespace: azimuth-docs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: azimuth-docs-deployment-role
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: brown-dev-001
+---
+# Ingress for r-shiny apps app project
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: brown-dev-001-r-shiny-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: azimuth-shiny.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: azimuth-shiny
+                port:
+                  number: 80
+---
+# Ingress for streamlit apps app project
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: brown-dev-001-streamlit-apps-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: azimuth-streamlit.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: mushroomclassifier-service
+                port:
+                  number: 80
+---
+# Ingress for flask app project
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: brown-dev-001-flask-apps-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: azimuth-flask.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: brown-dev-001-mvp-app-service
+                port:
+                  number: 80
+---
+# ingress for sso-streamlit webapp
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: sso-streamlit-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: azimuth-sso-streamlit.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: sso-streamlit-service
+                port:
+                  number: 80
+---
+# ingress for sso-streamlit webapp
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: kserve-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: sklearn-iris-1-predictor.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: sklearn-iris-1-predictor
+                port:
+                  number: 80
+---
+# # culling sidecar
+# apiVersion: networking.istio.io/v1alpha3
+# kind: Sidecar
+# metadata:
+#   name: ingress-notebook-sidecar-mtls-envoy-metrics
+#   namespace: brown-dev-001
+# spec:
+#   workloadSelector:
+#     labels:
+#       default: "true"
+#   ingress:
+#     - port:
+#         number: 8765
+#         protocol: HTTP
+#         name: mtls-envoy-metrics
+#       defaultEndpoint: 127.0.0.1:15090
+#       tls:
+#         mode: ISTIO_MUTUAL
+# ---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: default-editor
+  name: default-editor-token
+  namespace: brown-dev-001
+type: kubernetes.io/service-account-token
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: volcano-cluster-role-binding-brown-dev-001
+  namespace: volcano
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: volcano-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: brown-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nodes-cluster-role-binding-brown-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nodes-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: brown-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-exec-cluster-role-binding-brown-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-exec-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: brown-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: service-reader-cluster-role-binding-brown-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: service-reader-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: brown-dev-001
+# ---
+# apiVersion: networking.istio.io/v1beta1
+# kind: VirtualService
+# metadata:
+#   name: argo-rollouts
+#   namespace: argo-rollouts
+# spec:
+#   gateways:
+#   - kubeflow/kubeflow-gateway
+#   hosts:
+#   - '*'
+#   http:
+#   - match:
+#     - uri:
+#         prefix: /argo-rollouts/
+#     rewrite:
+#       uri: /
+#     route:
+#     - destination:
+#         host: argo-rollouts-nonlive-dashboard.argo-rollouts.svc.cluster.local
+#         port:
+#           number: 3100
+# ---
+---
+# Spark UI Testing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-body-size: "2000M"
+  name: spark-ingress
+  namespace: brown-dev-001
+spec:
+  rules:
+    - host: azimuth-spark-ui.paas-brown.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: pyspark-rdd-ui-svc
+                port:
+                  number: 4040
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+  - kubernetes.io/pv-protection
+  - external-attacher/csi-trident-netapp-io
+  name: pvc-8bac86ff-d59e-44c2-bdee-25b7d501e1de
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 4Gi
+  csi:
+    driver: csi.trident.netapp.io
+    volumeAttributes:
+      backendUUID: a7c8b114-dffd-4a67-9959-381b570880c5
+      internalName: k8s_brown_pvc_8bac86ff_d59e_44c2_bdee_25b7d501e1de
+      name: pvc-8bac86ff-d59e-44c2-bdee-25b7d501e1de
+      protocol: file
+      storage.kubernetes.io/csiProvisionerIdentity: 1684862793882-8081-csi.trident.netapp.io
+    volumeHandle: pvc-8bac86ff-d59e-44c2-bdee-25b7d501e1de
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: fsx-ontap-silver
+  volumeMode: Filesystem
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+    - kubernetes.io/pvc-protection
+  name: datavol-openvaccine-dataset
+  namespace: brown-dev-001
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ontap-silver
+  volumeMode: Filesystem
+  volumeName: pvc-2051e61c-b63f-4039-a0ce-e1a43d623de8
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+    - kubernetes.io/pvc-protection
+  name: shared-brown-dev-001
+  namespace: brown-dev-001
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: fsx-ontap-silver
+  volumeMode: Filesystem
+  volumeName: pvc-8bac86ff-d59e-44c2-bdee-25b7d501e1de
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+    - kubernetes.io/pv-protection
+    - external-attacher/csi-trident-netapp-io
+  name: pvc-2051e61c-b63f-4039-a0ce-e1a43d623de8
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  csi:
+    driver: csi.trident.netapp.io
+    volumeAttributes:
+      backendUUID: 5ba15d23-03ec-40d3-9591-2d9ca8eca633
+      internalName: k8s_test_pvc_2051e61c_b63f_4039_a0ce_e1a43d623de8
+      name: pvc-2051e61c-b63f-4039-a0ce-e1a43d623de8
+      protocol: file
+      storage.kubernetes.io/csiProvisionerIdentity: 1684862793882-8081-csi.trident.netapp.io
+    volumeHandle: pvc-2051e61c-b63f-4039-a0ce-e1a43d623de8
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ontap-silver
+  volumeMode: Filesystem

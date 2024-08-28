@@ -1,0 +1,27 @@
+{%- for pv in all_claims -%}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  finalizers:
+    - kubernetes.io/pv-protection
+    - external-attacher/csi-trident-netapp-io
+  name: {{ pv.metadata.name }}
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ pv.spec.capacity.storage }}
+  csi:
+    driver: {{ pv.spec.csi.driver }}
+    volumeAttributes:
+      backendUUID: {{ pv.spec.csi.volumeAttributes.backendUUID }}
+      internalName: {{ pv.spec.csi.volumeAttributes.internalName }}
+      name: {{ pv.spec.csi.volumeAttributes.name }}
+      protocol: {{ pv.spec.csi.volumeAttributes.protocol }}
+      storage.kubernetes.io/csiProvisionerIdentity: {{ pv.spec.csi.volumeAttributes.sk }}
+    volumeHandle: {{ pv.spec.csi.volumeHandle }}
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: {{ pv.spec.storageClassName }}
+  volumeMode: {{ pv.spec.volumeMode }}
+{% endfor %}

@@ -1,0 +1,36 @@
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+    - kubernetes.io/pvc-protection
+  name: datavol-openvaccine-dataset
+  namespace: brown-dev-001
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: ontap-silver
+  volumeMode: Filesystem
+  volumeName: pvc-2051e61c-b63f-4039-a0ce-e1a43d623de8
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  finalizers:
+    - kubernetes.io/pvc-protection
+  name: shared-brown-dev-001
+  namespace: brown-dev-001
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 4Gi
+  storageClassName: fsx-ontap-silver
+  volumeMode: Filesystem
+  volumeName: pvc-8bac86ff-d59e-44c2-bdee-25b7d501e1de

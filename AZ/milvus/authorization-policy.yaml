@@ -6,3 +6,18 @@ metadata:
 spec:
  rules:
  - {}
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-milvus-etcd
+  namespace: brown-dev-001
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: etcd
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["brown-dev-001"]

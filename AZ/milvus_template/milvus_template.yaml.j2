@@ -1,0 +1,113 @@
+---
+apiVersion: milvus.io/v1beta1
+kind: Milvus
+metadata:
+  name: milvus-{{ cluster }}-{{ namespace }}
+  namespace: {{ namespace }}
+  labels:
+    app: milvus
+spec:
+  mode: cluster
+  dependencies:
+    storage:
+      external: true
+      type: S3
+      endpoint: s3.eu-west-1.amazonaws.com:443
+      secretRef: "mlpipeline-minio-artifact"
+    etcd:
+      external: true
+      endpoints: ["milvus-etcd.milvus-operator.svc.cluster.local:2379"]
+    pulsar:
+      external: true
+      endpoint: "milvus-pulsar-proxy.milvus-operator.svc.cluster.local:6650"
+  components:
+    image: harbor.csis.astrazeneca.net/milvusdb/milvus:{{ milvus_image_version }}
+    podAnnotations:
+      sidecar.istio.io/inject: "false"
+    proxy:
+      serviceType: ClusterIP
+  config:
+    etcd:
+      rootPath: {{ namespace }}
+    minio:
+      bucketName: {{ bucket_name }}
+      rootPath: artifacts/milvus-{{ namespace }}
+      useSSL: true
+    common:
+      security:
+        authorizationEnabled: true
+        superUsers: root
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: attu-svc
+  labels:
+    app: attu
+  namespace: {{ namespace }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: attu
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: attu
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attu
+  labels:
+    app: attu
+  namespace: {{ namespace }}
+  annotations:
+    common.security.authorizationEnabled: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: attu
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: attu
+    spec:
+      containers: 
+      - name: attu
+        image: harbor.csis.astrazeneca.net/zilliz/attu:{{ attu_image_version }}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: attu
+          containerPort: 3000
+          protocol: TCP
+        env:
+        - name: MILVUS_URL
+          value: "milvus-{{ namespace }}-milvus:19530"
+---
+# Contact `AI Support Teams` to create this ingress (URL to access the UI on browser)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "450"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "450"
+    nginx.ingress.kubernetes.io/proxy-body-size: "2048M"
+  name: attu-ingress
+  namespace: {{ namespace }}
+spec:
+  rules:
+    - host: milvus-{{ namespace }}.paas-{{ cluster }}.astrazeneca.net
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: attu-svc
+                port:
+                  number: 3000

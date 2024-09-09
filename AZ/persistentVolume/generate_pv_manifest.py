@@ -79,6 +79,6 @@ def merge_pvc(pv):
 
 old_pv_name = existing_pv_detial()
 new_pv_list = list_pv(old_pv_name)
-pv_data = new_pv_details(namespace,new_pv_list)
-pv = create_pv_manifest(pv_data)
-merge_pvc(pv)
+# pv_data = new_pv_details(namespace,new_pv_list)
+# pv = create_pv_manifest(pv_data)
+# merge_pvc(pv)

@@ -1,0 +1,168 @@
+---
+apiVersion: kubeflow.org/v1beta1
+kind: Profile
+metadata:
+  name: onyx-dev-001
+spec:
+  owner:
+    kind: User
+    name: nithin.rajan@astrazeneca.com
+---
+# Adding AI Support NP account
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    role: edit
+    user: enterpriseaisupport@astrazeneca.com   # replace with the email of the user from your Active Directory case sensitive
+  name: user-enterpriseaisupport-astrazeneca-com-clusterrole-edit
+  # Ex: if the user email is lalith.vaka@kp.org the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  # Note: if the user email is Lalith.Vaka@kp.org from your Active Directory, the name should be user-lalith-vaka-kp-org-clusterrole-edit
+  namespace: onyx-dev-001   # replace with the namespace/profile name that you are adding contributors to
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeflow-edit
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: enterpriseaisupport@astrazeneca.com
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  annotations:
+    role: edit
+    user: enterpriseaisupport@astrazeneca.com  # replace with the email of the user from your Active Directory case sensitive
+  name: user-enterpriseaisupport-astrazeneca-com-clusterrole-edit
+  namespace: onyx-dev-001   # replace with the namespace/profile name that you are adding contributors to
+spec:
+  action: ALLOW
+  rules:
+    - when:
+        - key: request.headers[kubeflow-userid]  # for GCP, use x-goog-authenticated-user-email instead of kubeflow-userid for authentication purpose
+          values:
+            - enterpriseaisupport@astrazeneca.com
+---
+# Proxy setting for internet outbound access
+apiVersion: "kubeflow.org/v1alpha1"
+kind: PodDefault
+metadata:
+  name: default
+  namespace: onyx-dev-001
+spec:
+  selector:
+    matchLabels:
+      default: "true"
+  desc: "default"
+  volumes:
+    - name: volume-kf-pipeline-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 86400
+              audience: pipelines.kubeflow.org
+  volumeMounts:
+    - mountPath: /var/run/secrets/kubeflow/pipelines
+      name: volume-kf-pipeline-token
+      readOnly: true
+  env:
+    - name: KF_PIPELINES_SA_TOKEN_PATH
+      value: /var/run/secrets/kubeflow/pipelines/token
+    - name: http_proxy
+      value: http://azpse.astrazeneca.net:9480
+    - name: https_proxy
+      value: http://azpse.astrazeneca.net:9480
+    - name: no_proxy
+      value: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net,localhost,127.0.0.1,::1,.kubeflow,.snowflakecomputing.com
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: default-editor
+  name: default-editor-token
+  namespace: onyx-dev-001
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: volcano-cluster-role-binding-onyx-dev-001
+  namespace: volcano
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: volcano-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: onyx-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nodes-cluster-role-binding-onyx-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nodes-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: onyx-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-exec-cluster-role-binding-onyx-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: pod-exec-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: onyx-dev-001
+---
+apiVersion: v1
+data:
+  defaultPipelineRoot: s3://az-eu-azimuth-kfp-onyx/artifacts/onyx-dev-001
+kind: ConfigMap
+metadata:
+  name: kfp-launcher
+  namespace: onyx-dev-001
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: service-reader-cluster-role-binding-onyx-dev-001
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: service-reader-cluster-role
+subjects:
+  - kind: ServiceAccount
+    name: default-editor
+    namespace: onyx-dev-001
+---
+# culling sidecar
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: ingress-notebook-sidecar-mtls-envoy-metrics
+  namespace: onyx-dev-001
+spec:
+  workloadSelector:
+    labels:
+      default: "true"
+  ingress:
+    - port:
+        number: 8765
+        protocol: HTTP
+        name: mtls-envoy-metrics
+      defaultEndpoint: 127.0.0.1:15090
+      tls:
+        mode: ISTIO_MUTUAL
+---

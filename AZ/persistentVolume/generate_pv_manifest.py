@@ -14,7 +14,7 @@ def existing_pv_detial():
     with open(filename, 'r') as file:
         file_list = list(yaml.safe_load_all(file))
         pv_name = [name['metadata']['name'] for name in file_list if name['kind'] == 'PersistentVolume']
-    # print(pv_name)
+    print(pv_name)
     return pv_name
 
 def list_pv(pv_name):
@@ -78,7 +78,7 @@ def merge_pvc(pv):
 
 
 old_pv_name = existing_pv_detial()
-new_pv_list = list_pv(old_pv_name)
+# new_pv_list = list_pv(old_pv_name)
 # pv_data = new_pv_details(namespace,new_pv_list)
 # pv = create_pv_manifest(pv_data)
 # merge_pvc(pv)

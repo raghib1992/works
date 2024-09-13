@@ -1,0 +1,56 @@
+name: test Milvus Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      milvus-operator-image:
+        type: string
+        description: required milvus operator image version
+      milvus-db-image:
+        type: string
+        description: required milvus db image version
+      milvus-etcd-image:
+        type: string
+        description: required milvus etcd image version
+
+env:
+  http_proxy: http://azpse.raghib.net:9480
+  https_proxy: http://azpse.raghib.net:9480
+  no_proxy: 10.0.0.0/8,172.29.0.0/8,raghib.net
+
+jobs:
+  build:
+    runs-on:
+      - self-hosted
+      - test
+    steps:
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: harbor.csis.raghib.net
+          username: ${{ secrets.test_HARBOR_USERNAME }}
+          password: ${{ secrets.test_HARBOR_PASSWORD }}
+
+      - name: Build and Push milvus-operator image
+        id: milvus_operator
+        if: ${{ inputs.milvus-operator-image != '' }}
+        run: |
+          docker pull milvusdb/milvus-operator:${{ inputs.milvus-operator-image }}
+          docker tag milvusdb/milvus-operator:${{ inputs.milvus-operator-image }} harbor.csis.raghib.net/milvusdb/milvus-operator:${{ inputs.milvus-operator-image }}
+          docker push harbor.csis.raghib.net/milvusdb/milvus-operator:${{ inputs.milvus-operator-image }}
+      
+      - name: Build and Push milvus db image
+        id: milvus_db
+        if: ${{ inputs.milvus-db-image != '' }}
+        run: |
+          docker pull milvusdb/milvus:${{ inputs.milvus-db-image }}
+          docker tag milvusdb/milvus:${{ inputs.milvus-db-image }} harbor.csis.raghib.net/milvusdb/milvus:${{ inputs.milvus-db-image }}
+          docker push harbor.csis.raghib.net/milvusdb/milvus:${{ inputs.milvus-db-image }}
+
+      - name: Build and Push milvus etcd image
+        id: milvus_etcd
+        if: ${{ inputs.milvus-etcd-image != '' }}
+        run: |
+          docker pull milvusdb/etcd:${{ inputs.milvus-etcd-image }}
+          docker tag milvusdb/etcd:${{ inputs.milvus-etcd-image }} harbor.csis.raghib.net/milvusdb/milvus:${{ inputs.milvus-etcd-image }}
+          docker push harbor.csis.raghib.net/milvusdb/etcd:${{ inputs.milvus-etcd-image }}

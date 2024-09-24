@@ -1,0 +1,89 @@
+apiVersion: v1
+data:
+  username: YXBw
+  password: cGFzc3dvcmQ=
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: brown-dev-001
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+data:
+  username: cG9zdGdyZXM=
+  password: YVoxbXV0aA==
+kind: Secret
+metadata:
+  name: superuser-secret
+  namespace: brown-dev-001
+type: kubernetes.io/basic-auth
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-brown-cluster
+  namespace: brown-dev-001
+spec:
+  instances: 3 # This will create one primary instance,two replica instances
+  
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: superuser-secret
+  # unsupervised: automated update of the primary once all replicas have been upgraded (default)
+  primaryUpdateStrategy: unsupervised
+  postgresql:
+    parameters:
+      log_statement: "ddl"
+      log_checkpoints: "on"
+      max_slot_wal_keep_size: "10GB"
+  imageName: harbor.csis.astrazeneca.net/azimuth-images/postgresql:16.4
+  imagePullPolicy: Always
+  # Environment variables for proxy settings
+  env:
+  - name: http_proxy
+    value: http://azpse.astrazeneca.net:9480
+  - name: https_proxy
+    value: http://azpse.astrazeneca.net:9480
+  - name: no_proxy
+    value: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net
+  # Persistent storage configuration
+  storage:
+    storageClass: fsx-ontap-silver
+    size: 100Gi
+  # Backup properties
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://az-eu-azimuth-kfp-brown/artifacts/brown-dev-001/pg
+      endpointURL: https://s3.eu-west-1.amazonaws.com
+      s3Credentials:
+        accessKeyId:
+          name: mlpipeline-minio-artifact
+          key: accesskey
+        secretAccessKey:
+          name: mlpipeline-minio-artifact
+          key: secretkey
+      wal:
+        compression: gzip
+        maxParallel: 8
+        encryption: AES256
+      data:
+        compression: gzip
+        encryption: AES256
+    retentionPolicy: "30d"
+  walStorage:
+    size: 20Gi
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: app-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION vectorscale CASCADE;
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "1"
+    limits:
+      memory: "1Gi"
+      cpu: "2"

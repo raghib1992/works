@@ -74,17 +74,39 @@ inputs = {
         metrics = {
           enabled = true
         }
-        # ingress = {
-        #   enabled     = false
-        #   path        = "/"
-        #   hostname    = "rabbitmq.paas-brown.astrazeneca.net"
-        #   annotations = {
-        #     "nginx.ingress.kubernetes.io/proxy-body-size"     = "2000M"
-        #     "nginx.ingress.kubernetes.io/proxy-read-timeout   = "180"
-        #     "nginx.ingress.kubernetes.io/proxy-send-timeout"  = "180"
-        #   }
-        #   ingressClassName = "nginx"
-        # }
+        ingress = {
+          enabled     = true
+          path        = "/"
+          pathType    = "Prefix"
+          hostname    = "rabbitmq.paas-brown.astrazeneca.net"
+          extraRules  = [
+            {
+              host = "rabbitmq-msg.paas-brown.astrazeneca.net"
+              http = {
+                paths = [
+                  {
+                    backend = {
+                      service = {
+                        name = "dev-azimuth-rabbitmq-cluster-nonlive-headless"
+                        port = {
+                          name = "amqp"
+                        }
+                      }
+                    }
+                    path = "/"
+                    pathType= "Prefix"
+                  }
+                ]
+              }
+            }
+          ]
+          ingressClassName = "nginx"
+          annotations = {
+            "nginx.ingress.kubernetes.io/proxy-body-size"     = "2000M"
+            "nginx.ingress.kubernetes.io/proxy-read-timeout"   = "180"
+            "nginx.ingress.kubernetes.io/proxy-send-timeout"  = "180"
+          }
+        }
       }
     }
   }

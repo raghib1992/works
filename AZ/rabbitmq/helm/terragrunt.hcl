@@ -79,27 +79,6 @@ inputs = {
           path        = "/"
           pathType    = "Prefix"
           hostname    = "rabbitmq.paas-brown.astrazeneca.net"
-          extraRules  = [
-            {
-              host = "rabbitmq-msg.paas-brown.astrazeneca.net"
-              http = {
-                paths = [
-                  {
-                    backend = {
-                      service = {
-                        name = "dev-azimuth-rabbitmq-cluster-nonlive-headless"
-                        port = {
-                          name = "amqp"
-                        }
-                      }
-                    }
-                    path = "/"
-                    pathType= "Prefix"
-                  }
-                ]
-              }
-            }
-          ]
           ingressClassName = "nginx"
           annotations = {
             "nginx.ingress.kubernetes.io/proxy-body-size"     = "2000M"
@@ -107,6 +86,17 @@ inputs = {
             "nginx.ingress.kubernetes.io/proxy-send-timeout"  = "180"
           }
         }
+        auth = {
+          username = "rabbit"
+          password = "<path:aiops/data/dev/rabbitmq#password>"
+        }
+        configuration = <<EOF
+## Username and password
+default_user = {{ .Values.auth.username }}
+{{- if and (not .Values.auth.securePassword) .Values.auth.password }}
+default_pass = {{ .Values.auth.password }}
+{{- end }}
+EOF
       }
     }
   }

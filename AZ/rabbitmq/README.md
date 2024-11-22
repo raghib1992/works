@@ -276,9 +276,9 @@ b. In Set Permission BLock, select virtual host, and fill regexp as per permissi
 
 # Reference
 - *https://github.com/rabbitmq/cluster-operator*
-
-OK40b5XTAWupFe3a
-hE2HJbIKVfOxNSIs
+- *https://github.com/rabbitmq/rabbitmq-tutorials/tree/main/python*
+- *https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq*
+- *https://github.com/bigdotsoftware/RabbitMQ-In-Practice*
 
 rabbitmqImage = {
     registry = "harbor.csis.astrazeneca.net"

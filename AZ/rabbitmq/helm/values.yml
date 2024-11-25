@@ -581,7 +581,7 @@ ldap:
   ##
   bindpw: ""
   ## @param ldap.basedn Base DN path where binddn account will search for the users.
-  ##
+  # # ##
   basedn: ""
   ## @param ldap.uidField Field used to match with the user name (uid, samAccountName, cn, etc). It matches with 'dn_lookup_attribute' in RabbitMQ configuration
   ## ref: https://www.rabbitmq.com/ldap.html#usernames-and-dns

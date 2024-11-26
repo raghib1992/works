@@ -21,3 +21,10 @@ create docker file
 create image
 create chart
 helm install rabbitmq-sample-app ./Charts/rabbitmq-sample-app -n rabbit
+
+### Uninstall
+helm uninstall rabbitmq-sample-app -n rabbit
+helm uninstall prometheus-adapter -n rabbit
+helm uninstall prometheus -n rabbit
+helm uninstall rabbitmq-opertor -n rabbit
+helm uninstall rabbitmq -n rabbit

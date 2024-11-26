@@ -25,3 +25,7 @@ The RabbitMQ quorum queue is a modern queue type which implements a durable, rep
 
 
 https://stackoverflow.com/questions/66715405/how-to-auto-scale-helm-chart-rabbitmq-statefulset
+
+
+Ref:
+- https://ryanbaker.io/2019-10-07-scaling-rabbitmq-on-k8s/

@@ -16,12 +16,14 @@ spec:
 ```
 
 ### Check pods
+```sh
 kubectl get pods
+```
 
-### Install krew
-##### https://krew.sigs.k8s.io/docs/user-guide/setup/install/
+### Install krew to install rabbitmq plugin to use kubctl rabbitmq commnad: [Install krew](https://krew.sigs.k8s.io/docs/user-guide/setup/install/)
 
 ### Install kubectl rabbitmq plugin
+```sh
 kubectl krew install rabbitmq
-
+```
 

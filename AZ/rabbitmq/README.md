@@ -1,308 +1,88 @@
-Created by Nadim, MdRaghib (LTIMindtree), last modified just a moment ago, viewed 5 times
-Introduction
-RabbitMQ is a message-queueing software also known as a message broker or queue manager. Simply said; it is software where queues are defined, to which applications connect in order to transfer a message or messages.
+---
+layout: default
+title: RabbitMQ
+parent: Azimuth Stack
+nav_order: 2
+---
 
-A message broker acts as a middleman for various services (e.g. a web application). They can be used to reduce loads and delivery times of web application servers by delegating tasks that would normally take up a lot of time or resources to a third party that has no other job. The basic architecture of a message queue is simple - there are client applications called producers that create messages and deliver them to the broker (the message queue). Other applications, called consumers, connect to the queue and subscribe to the messages to be processed. Software may act as a producer, or consumer, or both a consumer and a producer of messages. Messages placed onto the queue are stored until the consumer retrieves them.
+![RabbitMQ](./rabbitmq_logo.png)
+# RabbitMQ
 
-RabbitMQ and server concepts
-Some important concepts need to be described before we dig deeper into RabbitMQ. The default virtual host, the default user, and the default permissions are used in the examples, so let’s go over the elements and concepts:
+## Why we need Message Brokers
+As the microservices architecture consists of numerous independent services, the connections between these services become messively large.
 
-Producer: Application that sends the messages.
-Consumer: Application that receives the messages.
-Queue: Buffer that stores messages.
-Message: Information that is sent from the producer to a consumer through RabbitMQ.
-Connection: A TCP connection between your application and the RabbitMQ broker.
-Channel: A virtual connection inside a connection. When publishing or consuming messages from a queue - it's all done over a channel.
-Exchange: Receives messages from producers and pushes them to queues depending on rules defined by the exchange type. To receive messages, a queue needs to be bound to at least one exchange.
-Binding: A binding is a link between a queue and an exchange.
-Routing key: A key that the exchange looks at to decide how to route the message to queues. Think of the routing key like an address for the message.
-AMQP: Advanced Message Queuing Protocol is the protocol used by RabbitMQ for messaging.
-Users: It is possible to connect to RabbitMQ with a given username and password. Every user can be assigned permissions such as rights to read, write and configure privileges within the instance. Users can also be assigned permissions for specific virtual hosts.
-Vhost, virtual host: Provides a way to segregate applications using the same RabbitMQ instance. Different users can have different permissions to different vhost and queues and exchanges can be created, so they only exist in one vhost.
-Setup RabbitMQ Cluster
-There are various way to install RabbitMQ. 
+We can’t rely on request/response-based systems in this situation since applications usually wait for another service’s response. A client triggering an inherently time-consuming service, such as one that requires significant computing resources,  this cause problamatic situation. This can impact the user experience if the client is a front-end application as the UI becomes unresponsive
 
-We deploy RabbitMQ Cluster Operator in a Kubernetes using helm.
+All these factors create a need for asynchronous communication between the microservices, and Message Based Systems can help. In such a system, a new component called an intermediary is introduced to facilitate communication between two applications/services instead of directly establishing communication between them. This middle component is known as Message Broker
+![message broker](./rabbitmq-1.png)
 
-Step 1: Need to Add Bitnami Repo in azimuth-deployment/argocd-project-configuration/terragrunt.hcl 
-```
-external_repos = {
-      rabbitmq-cluster-operator = {
-      url  = "https://charts.bitnami.com/bitnami"
-      type = "helm"
-      name = "rabbitmq-cluster-operator"
-    }
-}
-```
+## What is Message Broker?
+Message Brokers aid in decoupling applications as they are not directly interacting with each other. Each application only needs to adhere to the data format of this Message Broker, and it does not need to handle the nuances of interacting with different services. Therefore, it simplifies incorporating diverse applications in the system.
 
-Step 2: Create HCL file in azimuth-deployment repo. Details of code to create application is below.
+## What is RabbitMQ?
+RabbitMQ is an extremely popular open-source Message Broker used for building message-based systems. Although RabbitMQ supports multiple protocols, the most commonly used is AMQP.
 
-Step 3: Deploy RabbitMQ Cluster Operator in ArgoCD
-```
-app_name = {
-    rabbitmq-operator-nonlive = {
-      priority        = "0"
-      repo_url        = "https://charts.bitnami.com/bitnami"
-      enable_replace  = true
-      target_revision = "4.3.25"
-      path            = "rabbitmq-cluster-operator"
-      namespace       = "rabbitmq-system"
-      clusters        = local.clusters
-      plugin_name     = "argocd-vault-plugin-helm"
-      helm_args       = "--namespace rabbitmq-system --include-crds"
-      helm_values     = {
-        global = {
-          imageRegistry = "harbor.csis.astrazeneca.net"
-        }
-      }
-    }
-}
-```
+#### **Key Concepts**
+● ***Producer***: Application that sends the messages.
 
-Step 4: Create RabbitMQ Instance in ArgoCD
-```
-rabbitmq-cluster-nonlive = {
-      priority        = "1"
-      repo_url        = "https://charts.bitnami.com/bitnami"
-      enable_replace  = true
-      target_revision = "15.0.4"
-      path            = "rabbitmq"
-      namespace       = "rabbitmq-system"
-      clusters        = local.clusters
-      plugin_name     = "argocd-vault-plugin-helm"
-      helm_args       = "--namespace rabbitmq-system --include-crds"
-      helm_values     = {
-        global = {
-          imageRegistry = "harbor.csis.astrazeneca.net"
-        }
-        replicaCount  = 1
-        service = {
-          type        = "ClusterIP"
-        }
-        metrics = {
-          enabled = true
-        }
-        ingress = {
-          enabled     = true
-          path        = "/"
-          pathType    = "Prefix"
-          hostname    = "rabbitmq.paas-brown.astrazeneca.net"
-          ingressClassName = "nginx"
-          annotations = {
-            "nginx.ingress.kubernetes.io/proxy-body-size"     = "2000M"
-            "nginx.ingress.kubernetes.io/proxy-read-timeout"   = "180"
-            "nginx.ingress.kubernetes.io/proxy-send-timeout"  = "180"
-          }
-        }
-        auth = {
-          username = "rabbit"
-          password = "<path:aiops/data/dev/rabbitmq#password>" #Hashicorp-vault plugin install in argocd, it will pull secret from the mention path
-        }
-        configuration = <<EOF
-## Username and password
-default_user = {{ .Values.auth.username }}
-{{- if and (not .Values.auth.securePassword) .Values.auth.password }}
-default_pass = {{ .Values.auth.password }}
-{{- end }}
-EOF
-      }
-    }
+● ***Consumer***: Application that receives the messages.
+
+● ***Queue***: Stores messages that are consumed by applications
+
+● ***Connection***: A TCP connection between your application and the RabbitMQ broker.
+
+● ***Channel***: Lightweight connections that share a single TCP connection. Publishing or or consuming messages from a queue is done over a channel.
+
+● ***Exchange***: Receives messages from producers and pushes them to queues depending on rules defined by the exchange type. A queue must be bound to at least one exchange to receive messages.
+
+● ***Binding***: Bindings are rules that exchanges use (among other things) to route messages to queues.
+
+● ***Routing key***: A key that the exchange uses to decide how to route the message to queues. Think of the routing key as an address for the message.
+
+● ***Users***: It is possible to connect to RabbitMQ with a given username and password. Users can be assigned permissions such as rights to read, write, and configure privileges within the instance. Users can also be assigned permissions for specific virtual hosts.
+
+● ***Vhost, virtual host***: Virtual hosts provide logical grouping and separation of resources. Users can have different permissions to different vhost(s), and queues and exchanges can be created so they only exist in one vhost
+
+#### **What is AMQP?**
+AMQP (Advanced Message Queuing Protocol) is a messaging protocol that enables conforming client applications to communicate with conforming messaging middleware brokers. It’s an application layer protocol that transmits data in binary format. In this application, data is sent as frames.
+![AMQP](./AMQP.png)
+
+#### ***How Message Flow in RabbitMQ?***
+![messageflow](./message.png)
+1. Producer publishes messages to exchange via a channel established between them at the time of application startup.
+2. Exchange receives the message and finds appropriate bindings based on message attributes and exchange types.
+3. Selected binding is then used to route messages to intended queues.
+4. The message stays in the queue until handled by the consumer.
+5. Consumers receive the messages using channels established usually at application startup.
+
+#### ***Exchange Types***
+Exchanges are entities that receive messages. Exchanges take a message and route it into zero or more queues. The routing algorithm used depends on the exchange type and rules called bindings.
+#### There are four types of exchanges.
+● ***Direct (Default)***: The message is routed to the queues whose binding key matches the message’s routing key. It is primarily used for unicast routing of messages.
+
+● ***Fanout***: It routes messages to all the queues bound to it, and the routing key is ignored.
+
+● ***Topic***: The topic exchange does a wildcard match between the routing key and the routing pattern specified in the binding.
+
+● ***Header***: The header exchanges use the message header attributes for routing.
+
+#### Queue Types
+#### To define a queue in generic terms, it is a sequential data structure with two primary operations: an item can be enqueued (added) at the tail and dequeued (consumed) from the head.
+#### Queues play a major role in the messaging technology space. Many messaging protocols and tools assume that publishers and consumers communicate using a queue-like storage mechanism.
+
+## RabbitMQ oficial Sample hello-World example:
+1. Sample code to install RabbitMQ is follow: [Install-RabbitMQ](https://github.com/azu-ignite/azimuth-deployment/blob/main/rabbitmq/nonlive/terragrunt.hcl)
+
+2. Get Sample Tutorial from RabbitMQ official github repo, Link [RabbitMQ-Tutorial](https://github.com/rabbitmq/rabbitmq-tutorials/tree/main/python)
+
+3. Cluster will be like as mention below:
+```sh
+hostname: dev-azimuth-rabbitmq-cluster-nonlive-0.dev-azimuth-rabbitmq-cluster-nonlive-headless.rabbitmq-system.svc.cluster.local' 
+# <rabbitmq-cluster-name><service-name>.<namespace>.svc.cluster.local'
+username: rabbit
+password: <Get from secret - dev-azimuth-rabbitmq-cluster-nonlive>
 ```
 
-Step 5: Test Hello World example using Python Script
+4. First Sample is for send and recieve message to RabbitMQ. Follow [README.md](https://github.com/rabbitmq/rabbitmq-tutorials/blob/main/python/README.md) file
 
-Send message to RabbitMQ queue
-send.py
-```
-#!/usr/bin/env python
-import pika
- 
- 
-rabbitmq_host = 'dev-azimuth-rabbitmq-cluster-nonlive-0.dev-azimuth-rabbitmq-cluster-nonlive-headless.rabbitmq-system.svc.cluster.local'
-rabbitmq_port = 5672
-rabbitmq_user = 'test'
-# To get the the password- get from secret - dev-azimuth-rabbitmq-cluster-nonlive
-rabbitmq_password = 'test123'
- 
- 
-# Create a credentials object
-credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
- 
-# Define connection parameters
-connection_params = pika.ConnectionParameters(
-    host=rabbitmq_host,
-    port=rabbitmq_port,
-    credentials=credentials,
-    virtual_host='brown-dev-001'
-)
- 
-# Establish connection to RabbitMQ
-try:
-    connection = pika.BlockingConnection(connection_params)
-    channel = connection.channel()
-     
-    print("Connected to RabbitMQ successfully!")
-     
-    # Example of creating a queue
-    channel.queue_declare(queue='hello')
- 
-    countries_and_code = {
-        'CANADA': 'CA',
-        'FRANCE': 'FR',
-        'GERMANY': 'DE',
-        'GREECE': 'GR',
-        'HONG KONG': 'HK',
-        'ICELAND': 'IS',
-        'INDIA': 'IN',
-        'INDONESIA': 'ID',
-        'IRAN, ISLAMIC REPUBLIC OF': 'IR',
-        'JAPAN': 'JP',
-        'KUWAIT': 'KW',
-        'LUXEMBOURG': 'LU',
-        'MADAGASCAR': 'MG',
-        'MALDIVES': 'MV',
-        'MAURITIUS': 'MU',
-        'NEPAL': 'NP',
-        'NEW ZEALAND': 'NZ',
-        'QATAR': 'QA',
-        'SAUDI ARABIA': 'SA',
-        'SWITZERLAND': 'CH',
-        'TURKEY': 'TR',
-        'UNITED ARAB EMIRATES': 'AE',
-        'UNITED KINGDOM': 'GB',
-        'UNITED STATES': 'US'
-    }
- 
-    for country in countries_and_code:
-        channel.basic_publish(exchange='', routing_key='hello', body=f"Hello {country}",properties=pika.BasicProperties(delivery_mode=2,))
-        print(f" [x] Sent 'Hello {country}!'")
-     
-    # Close the connection
-    connection.close()
-    print("Connection closed.")
-     
-except Exception as e:
-    print(f"Failed to connect to RabbitMQ: {e}")
-```
-
-receive.py
-```
-#!/usr/bin/env python
-import pika, sys, os
- 
-rabbitmq_host = 'dev-azimuth-rabbitmq-cluster-nonlive-0.dev-azimuth-rabbitmq-cluster-nonlive-headless.rabbitmq-system.svc.cluster.local'
-rabbitmq_port = 5672
-rabbitmq_user = 'test'
-# To get the the password- get from secret - dev-azimuth-rabbitmq-cluster-nonlive
-rabbitmq_password = 'test123'
- 
-def main():
-    # Create a credentials object
-    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_password)
- 
-    # Define connection parameters
-    connection_params = pika.ConnectionParameters(
-        host=rabbitmq_host,
-        port=rabbitmq_port,
-        credentials=credentials
-        virtual_host='brown-dev-001'
-    )
-    connection = pika.BlockingConnection(connection_params)
-    channel = connection.channel()
- 
-    channel.queue_declare(queue='hello')
- 
-    def callback(ch, method, properties, body):
-        print(f" [x] Received {body}")
- 
-    channel.basic_consume(queue='hello', on_message_callback=callback, auto_ack=True)
- 
-    print(' [*] Waiting for messages. To exit press CTRL+C')
-    channel.start_consuming()
- 
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print('Interrupted')
-        try:
-            sys.exit(0)
-        except SystemExit:
-            os._exit(0)
-```
-
-Create User
-Create User using Web-UI
-Create vhost: 
-In a single-tenant environment, for example, when your RabbitMQ cluster is dedicated to power a single system in production, using default virtual host (/) is perfectly fine.
-
-In multi-tenant environments, use a separate vhost for each tenant/environment, e.g. project1_development, project1_production, project2_development, project2_production, and so on
-
-Click on Admin tab
-
-
-b. Click on Virtual Host on Right side 
-
-c. Fill the tab for Name, Description and Tag
-
-
-
-d. Click on Add Virtual Host
-
-
-
-2. Create User
-
-
-
-a. Click on User in Right side panel
-
-b. Fill the all tabs for Add user
-
-c. Click on button for Add User
-
-
-
-3. Give Access to User
-
-a. Click on username (here click on bob)
-
-
-
-b. In Set Permission BLock, select virtual host, and fill regexp as per permission you want want to five to user. "*" for all permission
-
-
-
-
-# Reference
-- *https://github.com/rabbitmq/cluster-operator*
-- *https://github.com/rabbitmq/rabbitmq-tutorials/tree/main/python*
-- *https://github.com/bitnami/charts/tree/main/bitnami/rabbitmq*
-- *https://github.com/bigdotsoftware/RabbitMQ-In-Practice*
-
-rabbitmqImage = {
-    registry = "harbor.csis.astrazeneca.net"
-    repository = "bitnami/rabbitmq"
-    tag = "4.0.2-debian-12-r0"
-}
-msgTopologyOperator = {
-    image = {
-    registry = "harbor.csis.astrazeneca.net"
-    repository = "bitnami/rmq-messaging-topology-operator"
-    tag = "1.15.0-debian-12-r0"
-    }
-}
-clusterOperator ={ 
-    image = {
-    registry = "harbor.csis.astrazeneca.net"
-    repository = "bitnami/rabbitmq-cluster-operator"
-    tag = "2.11.0-debian-12-r0"
-    }
-}
-credentialUpdaterImage ={ 
-    image = {
-    registry = "harbor.csis.astrazeneca.net"
-    repository = "bitnami/rmq-default-credential-updater"
-    tag = "1.0.4-debian-12-r29"
-    }
-}
+5. Following sample tutorial for [Two-Queue](https://www.rabbitmq.com/tutorials/tutorial-two-python.html), [Publish/susbcribe](https://www.rabbitmq.com/tutorials/tutorial-three-python.html), [Routing](https://www.rabbitmq.com/tutorials/tutorial-four-python.html), [Topics](https://www.rabbitmq.com/tutorials/tutorial-five-python.html) and [RPC](https://www.rabbitmq.com/tutorials/tutorial-six-python.html).

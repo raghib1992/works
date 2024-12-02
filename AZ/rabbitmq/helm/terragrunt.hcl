@@ -88,7 +88,7 @@ inputs = {
         }
         auth = {
           username = "rabbit"
-          password = "<path:aiops/data/dev/rabbitmq#password>"
+          password = "<path:aiops/data/dev/rabbitmq#password>" #plugin in argocd help to fetch secret from vault
         }
         configuration = <<EOF
 ## Username and password

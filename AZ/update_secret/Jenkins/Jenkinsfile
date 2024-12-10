@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'CLUSTER', defaultValue: 'brown' , description: 'Name of cluster. If using brown cluster input text as below')
+        string(name: 'DEPLOYMENT_NAME', defaultValue: 'ml-pipeline-ui-artifact', description: 'Name of the deployment to restart.')
+    }
+
+    stages {
+        stage('Rollout Restart Deployment') {
+            steps {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
+                    sh '''
+                        set +x
+
+                        # Skip profile retrieval and context switch for the 'bronze' cluster
+                        if [ "$CLUSTER" != "bronze" ]; then
+                            echo "Switching to ${CLUSTER} cluster"
+                            kubectl config use-context ai-ops-${CLUSTER}@kubernetes
+
+                            # Get profiles
+                            echo "Getting profiles"
+                            PROFILES=$(kubectl get profile -o json)
+                            
+                            # Check if profiles exist
+                            if [ -z "$PROFILES" ]; then
+                                echo "Error: No profiles found"
+                                exit 1
+                            fi
+                            
+                            # Get namespaces from profiles
+                            NAMESPACES=$(echo $PROFILES | jq -r '.items[].metadata.name' | paste -sd "," -)
+                            echo "Found namespaces: $NAMESPACES"
+                            
+                            # Loop through namespaces
+                            for ns in $(echo $NAMESPACES | tr ',' ' '); do
+                                echo "Switching to $ns namespace in cluster $CLUSTER"
+                                kubectl config set-context $(kubectl config current-context) --namespace=$ns
+                                
+                                # Copy secret value to respective namespace
+                                echo "Copying secret 'mlpipeline-minio-artifact' to $ns namespace"
+                                SOURCE_SECRET=$(kubectl get secret -n kubeflow mlpipeline-minio-artifact -o json)
+                                TARGET_SECRET=$(kubectl get secret -n $ns mlpipeline-minio-artifact -o json)
+                                UPDATED_SECRET=$(echo $TARGET_SECRET | jq --argjson source "$SOURCE_SECRET" '.data.accesskey = $source.data.accesskey | .data.secretkey = $source.data.secretkey')
+                                echo $UPDATED_SECRET | kubectl apply -f -
+
+                                # Restart deployment
+                                echo "Restarting $DEPLOYMENT_NAME deployment in $ns namespace"
+                                kubectl rollout restart deployment $DEPLOYMENT_NAME
+                            done
+                        else
+                            echo "Skipping cluster $CLUSTER"
+                        fi
+                    '''
+                }
+            }
+        }
+    }
+}
+

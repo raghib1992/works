@@ -1,0 +1,304 @@
+apiVersion: v1
+kind: Node
+metadata:
+  annotations:
+    csi.volume.kubernetes.io/nodeid: '{"csi.trident.netapp.io":"ip-10-201-9-142.emea.astrazeneca.net"}'
+    flannel.alpha.coreos.com/backend-data: '{"VNI":1,"VtepMAC":"12:cd:d7:10:f9:d3"}'
+    flannel.alpha.coreos.com/backend-type: vxlan
+    flannel.alpha.coreos.com/kube-subnet-manager: "true"
+    flannel.alpha.coreos.com/public-ip: 10.201.9.142
+    kubeadm.alpha.kubernetes.io/cri-socket: unix:///var/run/containerd/containerd.sock
+    node.alpha.kubernetes.io/ttl: "0"
+    projectcalico.org/IPv4Address: 10.201.9.142/24
+    projectcalico.org/IPv4IPIPTunnelAddr: 172.29.124.1
+    spot.io/node-config-hash: 74dd9dbf54
+    volumes.kubernetes.io/controller-managed-attach-detach: "true"
+  creationTimestamp: "2024-11-28T02:49:18Z"
+  labels:
+    autoscaling: "true"
+    beta.kubernetes.io/arch: amd64
+    beta.kubernetes.io/os: linux
+    instance-type: m5.2xlarge
+    kubernetes.io/arch: amd64
+    kubernetes.io/hostname: ip-10-201-9-142.emea.astrazeneca.net
+    kubernetes.io/os: linux
+    node-role.kubernetes.io/worker: "true"
+    role: worker
+    spotinst.io/node-lifecycle: spot
+    spotinst.io/ocean-vng-id: ols-60ca7da3
+  name: ip-10-201-9-142.emea.astrazeneca.net
+  resourceVersion: "2415997588"
+  uid: 56810897-119b-440c-be40-dbfb657c4194
+spec:
+  podCIDR: 172.29.124.0/23
+  podCIDRs:
+  - 172.29.124.0/23
+  providerID: aws:///eu-west-1b/i-05c4f6773689d310b
+status:
+  addresses:
+  - address: 10.201.9.142
+    type: InternalIP
+  - address: ip-10-201-9-142.emea.astrazeneca.net
+    type: Hostname
+  allocatable:
+    cpu: 7350m
+    ephemeral-storage: "94478881018"
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 31178184Ki
+    pods: "110"
+  capacity:
+    cpu: "8"
+    ephemeral-storage: 104846316Ki
+    hugepages-1Gi: "0"
+    hugepages-2Mi: "0"
+    memory: 32304584Ki
+    pods: "110"
+  conditions:
+  - lastHeartbeatTime: "2024-11-28T02:50:17Z"
+    lastTransitionTime: "2024-11-28T02:50:17Z"
+    message: Flannel is running on this node
+    reason: FlannelIsUp
+    status: "False"
+    type: NetworkUnavailable
+  - lastHeartbeatTime: "2024-12-02T08:51:36Z"
+    lastTransitionTime: "2024-11-28T02:49:18Z"
+    message: kubelet has sufficient memory available
+    reason: KubeletHasSufficientMemory
+    status: "False"
+    type: MemoryPressure
+  - lastHeartbeatTime: "2024-12-02T08:51:36Z"
+    lastTransitionTime: "2024-11-28T02:49:18Z"
+    message: kubelet has no disk pressure
+    reason: KubeletHasNoDiskPressure
+    status: "False"
+    type: DiskPressure
+  - lastHeartbeatTime: "2024-12-02T08:51:36Z"
+    lastTransitionTime: "2024-11-28T02:49:18Z"
+    message: kubelet has sufficient PID available
+    reason: KubeletHasSufficientPID
+    status: "False"
+    type: PIDPressure
+  - lastHeartbeatTime: "2024-12-02T08:51:36Z"
+    lastTransitionTime: "2024-11-28T02:49:52Z"
+    message: kubelet is posting ready status
+    reason: KubeletReady
+    status: "True"
+    type: Ready
+  daemonEndpoints:
+    kubeletEndpoint:
+      Port: 10250
+  images:
+  - names:
+    - harbor.csis.astrazeneca.net/docker/nvdia-dind@sha256:728bdff8a89c9f79c732b76bc10f5a58d73fc5114e5529b9d92d0922661d44ae
+    - harbor.csis.astrazeneca.net/docker/nvdia-dind:latest
+    sizeBytes: 1527416261
+  - names:
+    - harbor.csis.astrazeneca.net/kubeflow/spark-operator@sha256:2e8bdb5970f6e67cc7fe68c5a41670d0418788688ea57c48db8f467f236d464d
+    - harbor.csis.astrazeneca.net/kubeflow/spark-operator:2.0.2
+    sizeBytes: 564333758
+  - names:
+    - harbor.csis.astrazeneca.net/summerwind/actions-runner@sha256:cd200793bfd083bfaaa0697a77cf81f6ba92d4ebfe73e3d4df442b7f504179ae
+    - harbor.csis.astrazeneca.net/summerwind/actions-runner:v2.320.0-ubuntu-22.04
+    sizeBytes: 410218311
+  - names:
+    - harbor.csis.astrazeneca.net/azimuth-demo/dash-app@sha256:9d9e1bffdef670dda6c72a94edb5ea49606199bf84be705ddeaf43fc0083b0d7
+    - harbor.csis.astrazeneca.net/azimuth-demo/dash-app:latest
+    sizeBytes: 387186336
+  - names:
+    - harbor.ets.astrazeneca.net/azimuth/apimanagement-docs@sha256:650055ea62d05cb1555aad4bdc45f01dfef43a2fee36033c2532077a805c2a35
+    - harbor.ets.astrazeneca.net/azimuth/apimanagement-docs:latest
+    sizeBytes: 358087813
+  - names:
+    - harbor.csis.astrazeneca.net/azimuth-demo/flask-demo@sha256:f07be6091828293be3898403ffb0f634c4202647e70ba1f94a86e3c448b83a37
+    - harbor.csis.astrazeneca.net/azimuth-demo/flask-demo:latest
+    sizeBytes: 349268635
+  - names:
+    - harbor.csis.astrazeneca.net/cna/ci-telegraf@sha256:bf0ece4c32633f14a4327d2e0fc5f9537154d3874ab10f0bd86f854067e5b074
+    - harbor.csis.astrazeneca.net/cna/ci-telegraf:1.29.4-1.1570.0
+    sizeBytes: 185614205
+  - names:
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argocd@sha256:f5482a035f9142d8fd997157bf75b975dcaf1a02d7940624e90ce3a2961c8734
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argocd:v2.13.1
+    sizeBytes: 179993290
+  - names:
+    - harbor.csis.astrazeneca.net/debris/elastic/filebeat@sha256:7046ae2a5f22ac9103959c4f5a487883d9ab6474c4113e18f2232019a606e5a8
+    - harbor.csis.astrazeneca.net/debris/elastic/filebeat:7.13.2
+    sizeBytes: 160095333
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/api-server@sha256:8ea39dbbd0a176fdae1c38803a6d2b493aefcab09f7bbecdd4945de221431f36
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/api-server:2.1.0-dirty-custom1
+    sizeBytes: 148270075
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/seldonio/seldon-core-operator@sha256:45b14d25457b5ac2a9262df60d132f410b232ac49afab3af54efcf11f17e564c
+    - harbor.csis.astrazeneca.net/docker.io/seldonio/seldon-core-operator:1.17.1
+    sizeBytes: 128799294
+  - names:
+    - harbor.csis.astrazeneca.net/bitnami/rabbitmq@sha256:2306a937c42b318ee451c42ea786403182a8064c7e53f5095da7b76bdd8feb9c
+    - harbor.csis.astrazeneca.net/bitnami/rabbitmq:4.0.2-debian-12-r0
+    sizeBytes: 118022342
+  - names:
+    - harbor.csis.astrazeneca.net/cna/netapp-monitoring@sha256:11a1d51256f89aa52f15725a70726a16eecfe1e3da640014915bb022b22b3d71
+    - harbor.csis.astrazeneca.net/cna/netapp-monitoring:1.1570.0
+    sizeBytes: 115016371
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/kubeflownotebookswg/volumes-web-app@sha256:cd2042c05274c32597fb81c832add748b5b3f5528454918e29c70132159211b0
+    - harbor.csis.astrazeneca.net/docker.io/kubeflownotebookswg/volumes-web-app:v1.8.0
+    sizeBytes: 100662917
+  - names:
+    - harbor.csis.astrazeneca.net/debris/kubernetesui/kong@sha256:0a5b9a7673a4375ac8789b01a81c18c970d0efb010ec510b72c752b9e7f05741
+    - harbor.csis.astrazeneca.net/debris/kubernetesui/kong:3.6
+    sizeBytes: 97216355
+  - names:
+    - harbor.csis.astrazeneca.net/grafana/grafana@sha256:5948962c6208273169ea8275c0235d3844a595a18fc8f443e66649de118d1371
+    - harbor.csis.astrazeneca.net/grafana/grafana:10.0.5
+    sizeBytes: 94594578
+  - names:
+    - harbor.csis.astrazeneca.net/debris/calico/cni@sha256:ec0fa42b4d03398995800b44131b200aee2c76354d405d5d91689ec99cc70c56
+    - harbor.csis.astrazeneca.net/debris/calico/cni:v3.25.0
+    sizeBytes: 87983243
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/istio/proxyv2@sha256:473e00e5bbe640892e1e217c7954b9b39327fb9e310330676a8cca448460cbd6
+    - harbor.csis.astrazeneca.net/docker.io/istio/proxyv2:1.17.5
+    sizeBytes: 87318252
+  - names:
+    - harbor.csis.astrazeneca.net/debris/calico/node@sha256:56db28c3632192f56a1ff1360b83ef640fc8f41fa21a83126194811713e2f022
+    - harbor.csis.astrazeneca.net/debris/calico/node:v3.25.0
+    sizeBytes: 87184238
+  - names:
+    - harbor.csis.astrazeneca.net/kserve/models-web-app@sha256:9ebd5bbc6b768995e089c8f7f9aa0ad0143753ced38078ba47b26fdb4fcad501
+    - harbor.csis.astrazeneca.net/kserve/models-web-app:v0.10.0
+    sizeBytes: 81255888
+  - names:
+    - harbor.csis.astrazeneca.net/bitnami/kubectl-new@sha256:d8efe8b8b019057bc8449085957a1d7d1684858ba4b4b1559c703b4ca4abb973
+    - harbor.csis.astrazeneca.net/bitnami/kubectl-new:1.28.5
+    sizeBytes: 81011882
+  - names:
+    - harbor.csis.astrazeneca.net/debris/quay.io/prometheus/prometheus@sha256:ce6a070895ac04313a4e6e97498d7a6b980664335376200fc669aaa4ee36990b
+    - harbor.csis.astrazeneca.net/debris/quay.io/prometheus/prometheus:v2.33.5
+    sizeBytes: 77555384
+  - names:
+    - harbor.csis.astrazeneca.net/milvusdb/milvus-operator@sha256:532ff038605b7836aebb4f55e63f4cf1853edcca8ce992898d58f3c379b12cef
+    - harbor.csis.astrazeneca.net/milvusdb/milvus-operator:v1.1.2
+    sizeBytes: 68718493
+  - names:
+    - harbor.csis.astrazeneca.net/debris/kubernetesui/dashboard-web@sha256:86da03d436b1074515787f45e351f98209b341965d9aa4b55a2850318fa16217
+    - harbor.csis.astrazeneca.net/debris/kubernetesui/dashboard-web:1.5.1
+    sizeBytes: 62126210
+  - names:
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argo-rollouts@sha256:87d06142c8024b65a5ecc54933a3b1b21e5ce56b9c2b4a7e27d76f9e6c2e138f
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argo-rollouts:v1.7.2
+    sizeBytes: 50310121
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/kubeflowkatib/katib-ui@sha256:f525da58583d237dc0c47ced67e4769bb800210c1ae98d7aaa026f66d269a8e0
+    - harbor.csis.astrazeneca.net/docker.io/kubeflowkatib/katib-ui:v0.16.0
+    sizeBytes: 50284926
+  - names:
+    - harbor.csis.astrazeneca.net/summerwind/actions-runner-controller@sha256:3de5c2e3f8612c3dd1546c7179e3767e24769a68d84b9bfe55fba0d86ca9ab6b
+    - harbor.csis.astrazeneca.net/summerwind/actions-runner-controller:v0.27.6
+    sizeBytes: 48891540
+  - names:
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argocli@sha256:e2f01417dd1b87cf8eb02641b57c7fc0209848f5986f86fb38f12983cc6d2b40
+    - harbor.csis.astrazeneca.net/quay.io/argoproj/argocli:v3.3.10
+    sizeBytes: 47118270
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/viewer-crd-controller@sha256:d392f09b790f9f12d04dc6e6fda1b547feb8e328e4b9b28cc702c31151410722
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/viewer-crd-controller:2.1.0
+    sizeBytes: 47023993
+  - names:
+    - harbor.ets.astrazeneca.net/csis_sysops/netapp/trident@sha256:1498f99b0dbc602cb29b9a0cea6db730c17fa30c298e7b7bd756e2bbbc06a565
+    - harbor.ets.astrazeneca.net/csis_sysops/netapp/trident:22.10.0
+    sizeBytes: 44686791
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/kubeflownotebookswg/profile-controller@sha256:b9f2ba6e8fd7fd5ddae983f1198c190f5bbcb09195816e4565dac1118c706eca
+    - harbor.csis.astrazeneca.net/docker.io/kubeflownotebookswg/profile-controller:v1.8.0
+    sizeBytes: 33311766
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/scheduledworkflow@sha256:ab8ef17bda2b0a2f8c393f1561e3642bf88eecbc110938920122c0717ad8f2bd
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/scheduledworkflow:2.1.0
+    sizeBytes: 32539934
+  - names:
+    - harbor.csis.astrazeneca.net/cna/distroless-root-user@sha256:72baba9372fc2ff0879fd2922f69bd0835738624ab745734f55c48c1fbd9ced2
+    - harbor.csis.astrazeneca.net/cna/distroless-root-user:1.1570.0
+    sizeBytes: 32290542
+  - names:
+    - harbor.csis.astrazeneca.net/ghcr.io/dexidp/dex@sha256:4112b9bab55bc1cc1e795687e158d029f4cf2db2dde74898bb372f99ccc31c31
+    - harbor.csis.astrazeneca.net/ghcr.io/dexidp/dex:v2.36.0
+    sizeBytes: 32238590
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/cache-server@sha256:8ca78c874c3cd9eb47a63feecbeec226d68aa4c19b2c592b24b6e5c2497b0eaa
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/cache-server:2.1.0
+    sizeBytes: 31364045
+  - names:
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/kyverno@sha256:4f7ad1a530586d77b77e6e7cc171f979b07ffd193bf5985ef28c13a2a0831f8c
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/kyverno:v1.12.5
+    sizeBytes: 31115132
+  - names:
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/background-controller@sha256:5d81f3387baeeee31910eb74d247d197940582c176c9b5d64843fccd18bb3e6c
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/background-controller:v1.12.5
+    sizeBytes: 30616152
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/workflow-controller@sha256:e34a61ec8a27f6b3bd73231c97bbd479ed135404f61b5b761cfa0231ee68056c
+    - harbor.csis.astrazeneca.net/gcr.io/ml-pipeline/workflow-controller:v3.3.10-license-compliance
+    sizeBytes: 30211168
+  - names:
+    - harbor.csis.astrazeneca.net/kserve/kserve-controller@sha256:ab2b87290ef1948aa3d82c7e185ba972150f648425a75ead5302c84b5cdffad7
+    - harbor.csis.astrazeneca.net/kserve/kserve-controller:v0.11.1
+    sizeBytes: 29334379
+  - names:
+    - harbor.csis.astrazeneca.net/debris/tiller@sha256:e3148017eda49ca8603755f4e85e0e399207877c3b12b335ac690d4898c797d1
+    - harbor.csis.astrazeneca.net/debris/tiller:2.16.5
+    sizeBytes: 29140877
+  - names:
+    - harbor.csis.astrazeneca.net/cna/kube-rbac-proxy@sha256:64f7ac90bac0b58e74cbe63fb4ced9e7a6fa6a84af1fbb829d56aa50df7f51ec
+    - harbor.csis.astrazeneca.net/cna/kube-rbac-proxy:0.16.0-1.1570.0
+    sizeBytes: 28796363
+  - names:
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/kyvernopre@sha256:ea77a47cc2fa19369f826eb56dd318c06a63d9451ae4c0b2bb35abb1c2b56db5
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/kyvernopre:v1.12.5
+    sizeBytes: 28747449
+  - names:
+    - harbor.csis.astrazeneca.net/argocd-test/k8s.gcr.io/metrics-server/metrics-server@sha256:f9800ed2264fba9b5513ca183f0f7988c8597e21c72bb39888168232d378973d
+    - harbor.csis.astrazeneca.net/argocd-test/k8s.gcr.io/metrics-server/metrics-server:v0.6.1
+    sizeBytes: 28056685
+  - names:
+    - harbor.csis.astrazeneca.net/kubeflow/training-operator@sha256:5f487754cbb61f6f9fd7bcad47628f0edc500642dffa7d1b2ed0af0d377d5616
+    - harbor.csis.astrazeneca.net/kubeflow/training-operator:v1-855e096
+    sizeBytes: 27625802
+  - names:
+    - harbor.csis.astrazeneca.net/debris/quay.io/prometheus/alertmanager@sha256:b1ba90841a82ea24d79d4e6255b96025a9e89275bec0fae87d75a5959461971e
+    - harbor.csis.astrazeneca.net/debris/quay.io/prometheus/alertmanager:v0.24.0
+    sizeBytes: 27288332
+  - names:
+    - harbor.ets.astrazeneca.net/csis_sysops/csi-provisioner@sha256:861498e1780b17faa6d9d6a457124a53a1d2f66bb485b47c9335e20218d599e1
+    - harbor.ets.astrazeneca.net/csis_sysops/csi-provisioner:v3.3.0
+    sizeBytes: 25489196
+  - names:
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/policy-reporter@sha256:00017e8f54709c13413c92e9bccc3f663bd7baa58eed64034fb966e89474d41b
+    - harbor.csis.astrazeneca.net/ghcr.io/kyverno/policy-reporter:3.0.0-rc.5
+    sizeBytes: 25163727
+  - names:
+    - harbor.csis.astrazeneca.net/gcr.io/kubebuilder/kube-rbac-proxy@sha256:18f12fc3a0085bbc303cfbd2ad1151127c1c959c4641e36027547b6b66eb4c92
+    - harbor.csis.astrazeneca.net/quay.io/brancz/kube-rbac-proxy@sha256:18f12fc3a0085bbc303cfbd2ad1151127c1c959c4641e36027547b6b66eb4c92
+    - harbor.csis.astrazeneca.net/gcr.io/kubebuilder/kube-rbac-proxy:v0.13.1
+    - harbor.csis.astrazeneca.net/quay.io/brancz/kube-rbac-proxy:v0.13.1
+    sizeBytes: 24473563
+  - names:
+    - harbor.csis.astrazeneca.net/docker.io/metacontrollerio/metacontroller@sha256:cbdeeb3e8896a5b77b93f4ef9f16c7e47c6e1929372d973c58c2aa61ac614dcf
+    - harbor.csis.astrazeneca.net/docker.io/metacontrollerio/metacontroller:v2.0.4
+    sizeBytes: 24381512
+  - names:
+    - harbor.csis.astrazeneca.net/kiwigrid/k8s-sidecar@sha256:5d867dc02df64df46e3c68313759311897dde5c166e75ea7f9a24a3e162c8832
+    - harbor.csis.astrazeneca.net/kiwigrid/k8s-sidecar:1.25.0
+    sizeBytes: 24284624
+  nodeInfo:
+    architecture: amd64
+    bootID: 77d1eb75-f615-48fb-ba46-a53180819322
+    containerRuntimeVersion: containerd://1.6.33
+    kernelVersion: 3.10.0-1062.18.1.el7.x86_64
+    kubeProxyVersion: v1.25.10
+    kubeletVersion: v1.25.10
+    machineID: b30d0f2110ac3807b210c19ede3ce88f
+    operatingSystem: linux
+    osImage: CentOS Linux 7 (Core)
+    systemUUID: EC25A229-70BB-B940-F6D0-81070A28C766

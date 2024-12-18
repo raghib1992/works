@@ -1,0 +1,26 @@
+{%- for value in values -%}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-body-size: "2000M"
+  name: {{ value.metadata.name }}
+  namespace: {{ value.metadata.namespace }}
+spec:
+  rules:
+    - host: {{ value.spec.rules.0.host }}
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: {{ value.spec.rules.0.http.paths.0.backend.service.name }}
+                port:
+                  number: {{ value.spec.rules.0.http.paths.0.backend.service.port.number }}
+---
+
+{% endfor %}

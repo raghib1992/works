@@ -1,4 +1,5 @@
 from jinja2 import Environment, FileSystemLoader
+import os
 
 CLUSTER = os.environ['CLUSTER']
 NAMESPACE = os.environ['NAMESPACE']
@@ -13,7 +14,7 @@ content = templates.render(
     cluster = CLUSTER,
     namespace = NAMESPACE,
     milvus_image_version =  MILVUS_IMAGE_VERSION,
-    bucket_name = BBUCKET_NAME,
+    bucket_name = BUCKET_NAME,
     attu_image_version = ATTU_IMAGE_VERSION
 )
 

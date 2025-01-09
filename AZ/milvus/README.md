@@ -1,3 +1,10 @@
+## Ref
+```
+- https://github.com/zilliztech/milvus-operator
+- https://github.com/zilliztech/milvus-operator/tree/main/config/samples
+```
+
+
 ### Step 1. Create rbac rule milvus in namespace milvus from brown-dev-001 namespace
 - Open azimuth-profile repo
 - open `states\dev\rbac\cluster-roles.yaml`

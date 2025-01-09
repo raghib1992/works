@@ -39,8 +39,11 @@ kubectl -n open-webui exec -ti ollama-0 -- /bin/bash
 
 ### check module and chat
 ```t
+# go to root folder
 cd
+# check files
 ls -la
+# go to .ollama folder
 cd .ollama
 # sha files
 cd models/blobs

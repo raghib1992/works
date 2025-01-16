@@ -315,15 +315,17 @@ kubectl get pods
 kubectl get svc
     #open-webui-cnpg-db-rw service should be running
 ```
-- Exec into pod
-```sh
-kubectl -n open-webui exec -ti resource-limited-deployment-55965798cd-m56sr -- /bin/bash
-```
 - Get password
 ```sh
 kubectl get secret app-secret -o=jsonpath='{.data.password}' | base64 -d
 # w4Y0EOhgjqMQ8W
 ```
+
+- Exec into pod
+```sh
+kubectl -n open-webui exec -ti resource-limited-deployment-55965798cd-m56sr -- /bin/bash
+```
+
 - Connect to db
 ```sh
 psql -h open-webui-cnpg-db-rw -U app -d app;

@@ -33,15 +33,7 @@ spec:
               name: pgadminport
           env:
             - name: PGADMIN_DEFAULT_EMAIL
-              value: "knrs986@astrazeneca.net"
-            - name: PGADMIN_DEFAULT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: pgadmin-password
-                  key: password
-            - name: PGADMIN_PORT
-              value: "80"
-            - name: http_proxy
+             - name: http_proxy
               value: http://azpse.astrazeneca.net:9480
             - name: https_proxy
               value: http://azpse.astrazeneca.net:9480
@@ -92,7 +84,15 @@ spec:
             port:
               number: 80
         path: /
-        pathType: Prefix
+        pathType: Prefix         value: "knrs986@astrazeneca.net"
+            - name: PGADMIN_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgadmin-password
+                  key: password
+            - name: PGADMIN_PORT
+              value: "80"
+    
 ```
 2. Deploy this to brown-dev-001 namespace
 ```sh

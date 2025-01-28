@@ -1,0 +1,96 @@
+import kubernetes
+from kubernetes import client, config
+from jinja2 import Environment, FileSystemLoader
+import argparse
+import yaml
+import os
+
+def namespace_list(cluster):
+    if cluster == 'dev':
+        config.load_kube_config(config_file=os.environ['KUBECONFIG'],context='ai-ops-brown@kubernetes')
+    else:
+        config.load_kube_config(config_file=os.environ['KUBECONFIG'],context=f"ai-ops-{cluster}@kubernetes")
+    api_instance = client.CustomObjectsApi()
+    profiles = api_instance.list_cluster_custom_object(group="kubeflow.org",version="v1",plural="profiles")
+    namespace = [profile['metadata']['name'] for profile in profiles.get('items', [])]
+    print(f"Profiles in {cluster}is {namespace}")
+    return namespace
+
+def get_file_name(namespace):
+    if cluster == 'dev':
+        sort_namespace = "-".join(namespace.split("-")[-2:])
+        file_name = f"{sort_namespace}.yaml"
+    elif cluster in ['iron', 'bronze', 'lead' ]:
+        sort_name = namespace.split('-')
+        if cluster not in sort_name:
+            file_name = f"{namespace}.yaml"
+        else:
+            sort_namespace = "-".join(sort_name[-2:])
+            file_name = f"{sort_namespace}.yaml"
+    else:
+      file_name = f"{namespace}.yaml"
+      print(file_name)
+    if not os.path.exists(f"../states/{cluster}/{file_name}"):
+        with open(f"../states/{cluster}/{file_name}", "w") as file:
+            file.write("")
+    print(f"file_name in namespace {namespace} is {file_name}")
+    return file_name
+
+def existing_pvc_detial(cluster,file_name):
+    filename = f"../states/{cluster}/{file_name}"
+    with open(filename, 'r') as file:
+        file_list = list(yaml.safe_load_all(file))
+        pvc_name = [name['metadata']['name'] for name in file_list if name is not None and name['kind'] == 'PersistentVolumeClaim']
+    print(f" List of existing pv: {pvc_name}")
+    return pvc_name
+
+def new_pvc_details(cluster,namespace,pvc_name):
+    if cluster == 'dev':
+        config.load_kube_config(config_file=os.environ['KUBECONFIG'],context='ai-ops-brown@kubernetes')
+    else:
+        config.load_kube_config(config_file=os.environ['KUBECONFIG'],context=f"ai-ops-{cluster}@kubernetes")
+    core_v1 = client.CoreV1Api()
+    pvc = core_v1.list_persistent_volume_claim_for_all_namespaces()
+    pvc_list = list()
+    for item in pvc.items:
+        pvc_details = {}
+        if item.metadata.namespace in namespace:
+            if item.spec.access_modes[0] == 'ReadWriteMany' and item.metadata.name not in pvc_name:
+                pvc_details['metadata'] = {}
+                pvc_details['metadata']['name'] = item.metadata.name
+                pvc_details['metadata']['namespace'] = item.metadata.namespace
+                pvc_details['spec'] = {}
+                pvc_details['spec']['resources'] = {}
+                pvc_details['spec']['resources']['requests'] = {}
+                pvc_details['spec']['resources']['requests']['storage'] = item.spec.resources.requests['storage']
+                pvc_details['spec']['storageClassName'] = item.spec.storage_class_name
+                pvc_details['spec']['volumeMode'] = item.spec.volume_mode
+                pvc_details['spec']['volumeName'] = item.spec.volume_name
+                pvc_list.append(pvc_details)
+    return pvc_list
+
+def create_pvc_manifest(pvc_data):
+    env = Environment(loader=FileSystemLoader('../templates'))
+    template = env.get_template('pvc_template.yaml.j2')
+    rendered_yaml = template.render(all_claims=pvc_data)
+    return rendered_yaml
+
+def merge_pvc(cluster,file_name,pvc):
+    filename = f"../states/{cluster}/{file_name}"
+    with open(filename, 'a', newline='') as f:
+        f.write(pvc)
+        print(f"YAML file {filename} generated successfully.")
+
+parser = argparse.ArgumentParser(description="missing required values")
+parser.add_argument("-c", "--clusterName", help="cluster_name")
+parser.add_argument("-n", "--namespace", help="namespace")
+args = parser.parse_args()
+args = vars(args)
+cluster = args["clusterName"]
+namespace = args["namespace"]
+
+file_name = get_file_name(namespace)
+old_pvc_name = existing_pvc_detial(cluster,file_name)
+pvc_data = new_pvc_details(cluster,namespace,old_pvc_name)
+pvc_manifest = create_pvc_manifest(pvc_data)
+merge_pvc(cluster,file_name,pvc_manifest)

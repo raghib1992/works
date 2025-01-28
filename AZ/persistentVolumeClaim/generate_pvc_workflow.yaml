@@ -1,0 +1,121 @@
+name: Add PV and PVC Manifests to States Files
+
+on:
+  workflow_dispatch:
+    inputs:
+      clusterName:
+        type: choice
+        required: true
+        description: Select Cluster
+        default: 'dev' 
+        options: 
+        - bronze
+        - dev
+        - iron
+        - jade
+        - lead
+        - mirror
+        - onyx
+      namespace:
+        type: string
+        required: true
+        description: Namespace to add volume
+
+env:
+  ## Sets environment variable for internet access
+  http_proxy: http://azpse.astrazeneca.net:9480
+  https_proxy: http://azpse.astrazeneca.net:9480
+  no_proxy: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net
+  branchName: "add-volume-${{ inputs.clusterName }}-${{ github.run_number }}"
+
+jobs:
+  update-state-file:
+    runs-on:
+      - self-hosted
+      - azimuth-azimuth-profiles
+    steps:
+      - name: Get Code
+        uses: actions/checkout@v4
+      
+      - name: Set APT Proxy Configuration
+        run: |
+          echo "Acquire::http::proxy \"${{ env.http_proxy }}\";" | sudo tee -a /etc/apt/apt.conf
+          echo "Acquire::https::proxy \"${{ env.https_proxy }}\";" | sudo tee -a /etc/apt/apt.conf
+          echo "Acquire::ftp::proxy \"${{ env.http_proxy }}\";" | sudo tee -a /etc/apt/apt.conf
+          echo "Acquire::http::proxy::no_proxy \"${{ env.no_proxy }}\";" | sudo tee -a /etc/apt/apt.conf
+
+      - name: Install Kubectl
+        id: kubectl-install
+        uses: azure/setup-kubectl@v4.0.0
+        with:
+          version: 'v1.25.0'
+
+      - name: Install wget
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install wget jq -y
+
+      - name: Install GH Cli
+        id: github-cli
+        run: |
+          mkdir -p .bin
+          wget -q https://repo.azaibench.com/deploy/github/gh -O .bin/gh
+          chmod +x .bin/gh
+          echo "$GITHUB_WORKSPACE/.bin" >> $GITHUB_PATH
+      
+      - name: Configure kubeconfig
+        id: kubeconfig-setup
+        run: |
+          echo $KUBECONFIG | base64 -d > /tmp/kubeconfig
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
+      
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: install python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r volume_module.txt
+        working-directory: ./scripts
+
+      - name: Add Persistent Volume to State File
+        run: |
+          python generate_pv_manifest.py -c ${{ inputs.clusterName }} -n ${{ inputs.namespace }}
+        working-directory: ./scripts
+        env:
+          KUBECONFIG: /tmp/kubeconfig
+
+      - name: Add Persistent Volume Claim to State File
+        run: |
+          python generate_pvc_manifest.py -c ${{ inputs.clusterName }} -n ${{ inputs.namespace }}
+        working-directory: ./scripts
+        env:
+          KUBECONFIG: /tmp/kubeconfig
+      
+      - name: Git configure
+        id: branch
+        run: |
+          git config --global user.email "kwsh888@astrazeneca.net"
+          git config --global user.name "kwsh888_azu"
+          git remote set-url --push origin https://kwsh888_azu:$GITHUB_TOKEN@github.com/azu-ignite/azimuth-profiles
+          git checkout -b ${{ env.branchName }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Git Push and Raise-PR
+        id: raise-pr
+        run: |
+          change_file=`git status --porcelain | grep -q . && echo true || echo false`
+          if [[ "$change_file" == "true" ]]; then
+            git add states/${{ inputs.clusterName }}/.
+            git commit -m "Adding shared PV and PVC into states/${{ inputs.clusterName }} states file"
+            git push --set-upstream origin ${{ env.branchName }}
+            gh pr create --title "Adding shared PV and PVC into states/${{ inputs.clusterName }} states file" --body "Adding shared PV and PVC into states/${{ inputs.clusterName }} states file" --base main --repo https://github.com/AZU-IGNITE/azimuth-profiles
+          else
+            echo "No Volume with AccessMode ReadWriteMany option found"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

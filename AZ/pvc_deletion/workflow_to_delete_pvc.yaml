@@ -1,0 +1,84 @@
+name: Volume Deletion Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      CLUSTER:
+        description: 'Choose Cluster'
+        required: true
+        type: choice
+        options: ['brown','lead','bronze','iron','onyx']
+        default: 'brown'
+      NAMESPACE:
+        description: 'Kubernetes Namespace'
+        required: true
+        type: string
+      VOLUME_NAMES:
+        description: 'Comma-separated list of PVC names to be deleted'
+        required: true
+        type: string
+
+env:
+  ## Sets environment variable for internet access
+  http_proxy: http://azpse.astrazeneca.net:9480
+  https_proxy: http://azpse.astrazeneca.net:9480
+  no_proxy: 10.0.0.0/8,172.29.0.0/8,astrazeneca.net
+
+jobs:
+  volume_deletion:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'v1.21.0' # specify the version you need
+
+
+      - name: Set up KUBECONFIG
+        run: |
+          echo "${{ secrets.KUBE_CONFIG}}" | base64 --decode > /tmp/kubeconfig
+
+
+
+      - name: Volume Deletion
+        env:
+          KUBECONFIG: /tmp/kubeconfig
+          CLUSTER: ${{ github.event.inputs.CLUSTER}}
+          NAMESPACE: ${{ github.event.inputs.NAMESPACE}}
+          VOLUME_NAMES: ${{github.event.inputs.VOLUME_NAMES}}
+        run: |
+          set +x
+          echo "Switching to $CLUSTER cluster"
+          kubectl config use-context ai-ops-$CLUSTER@kubernetes
+          
+          IFS=',' read -r -a volume_array <<< "$VOLUME_NAMES"
+          delete_failure=false
+          
+          for VOLUME_NAME in "${volume_array[@]}"; do
+            echo "Finding $VOLUME_NAME volume"
+            kubectl -n $NAMESPACE get pvc $VOLUME_NAME -o json || { echo "Unable to find resource $VOLUME_NAME"; delete_failure=true; continue; }
+            access_mode=$(kubectl -n $NAMESPACE get pvc $VOLUME_NAME -o json | jq -r .spec.accessModes[0])
+            echo "Checking if $VOLUME_NAME is ReadWriteOnce"
+            
+            if [ "$access_mode" == "ReadWriteOnce" ]; then
+              echo "Volume can be deleted"
+              echo "Deleting $VOLUME_NAME volume"
+              kubectl -n $NAMESPACE delete pvc $VOLUME_NAME || { echo "Failed to delete $VOLUME_NAME"; delete_failure=true; }
+            else
+              echo "$VOLUME_NAME volume can't be deleted"
+              delete_failure=true
+            fi
+          done
+
+          if [ "$delete_failure" = true ]; then
+            echo "One or more volumes could not be deleted"
+          else
+            echo "All specified volumes were successfully deleted"
+          fi
+
+          # Ensure the script exits with success
+          exit 0

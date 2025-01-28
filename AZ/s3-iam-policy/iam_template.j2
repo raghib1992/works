@@ -1,0 +1,31 @@
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+        "Sid": "AllowRootAndHomeListingOfAzimuthBucket",
+        "Action": ["s3:ListBucket"],
+        "Effect": "Allow",
+        "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-{{ cluster }}"],
+        "Condition":{"StringEquals":{"s3:prefix":["","artifacts/{{ namespace }}/"],"s3:delimiter":["/"]}}
+        },
+        {
+        "Sid": "AllowListingOfUserFolder",
+        "Action": ["s3:ListBucket"],
+        "Effect": "Allow",
+        "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-{{ cluster }}"],
+        "Condition":{"StringLike":{"s3:prefix":
+                    [
+                            "artifacts/{{ namespace }}/*",
+                            "artifacts/{{ namespace }}"
+                    ]
+                    }
+            }
+        },
+        {
+            "Sid": "AllowAllS3ActionsInUserFolder",
+            "Action":["s3:*"],
+            "Effect":"Allow",
+            "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-{{ cluster }}/artifacts/{{ namespace }}/*"]
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+        "Sid": "AllowRootAndHomeListingOfAzimuthBucket",
+        "Action": ["s3:ListBucket"],
+        "Effect": "Allow",
+        "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-brown"],
+        "Condition":{"StringEquals":{"s3:prefix":["","artifacts/brown-dev-001/"],"s3:delimiter":["/"]}}
+        },
+        {
+        "Sid": "AllowListingOfUserFolder",
+        "Action": ["s3:ListBucket"],
+        "Effect": "Allow",
+        "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-brown"],
+        "Condition":{"StringLike":{"s3:prefix":
+                    [
+                            "artifacts/brown-dev-001/*",
+                            "artifacts/brown-dev-001"
+                    ]
+                    }
+            }
+        },
+        {
+            "Sid": "AllowAllS3ActionsInUserFolder",
+            "Action":["s3:*"],
+            "Effect":"Allow",
+            "Resource": ["arn:aws:s3:::az-eu-azimuth-kfp-brown/artifacts/brown-dev-001/*"]
+        }
+    ]
+}

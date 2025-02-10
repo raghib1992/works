@@ -1,0 +1,201 @@
+apiVersion: v1
+data:
+  username: {{ cnpg_app_username }}
+  password: {{ cnpg_app_password }}
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: {{ namespace }}
+  labels:
+    cnpg.io/reload: ""
+type: kubernetes.io/basic-auth
+---
+apiVersion: v1
+data:
+  username: {{ cnpg_superuser_name }}
+  password: {{ cnpg_superuser_password }}
+kind: Secret
+metadata:
+  name: superuser-secret
+  namespace: {{ namespace }}
+  labels:
+    cnpg.io/reload: ""
+type: kubernetes.io/basic-auth
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-{{ namespace }}-cluster
+  namespace: {{ namespace }}
+spec:
+  instances: {{ number_instance }} # This will create one primary instance,two replica instances
+  
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: superuser-secret
+  # unsupervised: automated update of the primary once all replicas have been upgraded (default)
+  primaryUpdateStrategy: unsupervised
+  postgresql:
+    parameters:
+      log_statement: "ddl"
+      log_checkpoints: "on"
+      max_slot_wal_keep_size: "10GB"
+  imageName: harbor.csis.raghib.net/raghib-images/postgresql:{{ cnpg_image_version }}
+  imagePullPolicy: Always
+  # Environment variables for proxy settings
+  env:
+  - name: http_proxy
+    value: http://azpse.raghib.net:9480
+  - name: https_proxy
+    value: http://azpse.raghib.net:9480
+  - name: no_proxy
+    value: 10.0.0.0/8,172.29.0.0/8,raghib.net
+  # Persistent storage configuration
+  storage:
+    storageClass: fsx-ontap-silver
+    size: {{ pvc_storage_size }}Gi
+  # Backup properties
+  backup:
+    barmanObjectStore:
+      destinationPath: s3://{{ aws_s3_bucket }}/artifacts/{{ namespace }}/pg
+      endpointURL: https://s3.{{ aws_bucket_region }}.amazonaws.com
+      s3Credentials:
+        accessKeyId:
+          name: mlpipeline-minio-artifact
+          key: accesskey
+        secretAccessKey:
+          name: mlpipeline-minio-artifact
+          key: secretkey
+      wal:
+        compression: gzip
+        maxParallel: 8
+        encryption: AES256
+      data:
+        compression: gzip
+        encryption: AES256
+    retentionPolicy: "30d"
+  walStorage:
+    size: {{ wal_storage_size }}Gi
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+      secret:
+        name: app-secret
+      postInitTemplateSQL:
+        - CREATE EXTENSION vectorscale CASCADE;
+        - CREATE EXTENSION age;
+        - ALTER USER app WITH SUPERUSER;
+
+  resources:
+    requests:
+      memory: "{{ request_memory }}Gi"
+      cpu: "{{ request_cpu }}"
+    limits:
+      memory: "{{ limits_memory }}Gi"
+      cpu: "{{ limits_cpu }}"
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: cnpg-{{ namespace }}-schedule-backup
+  namespace: {{ namespace }}
+spec:
+  schedule: "{{ schedule_backup_time }}" 
+  backupOwnerReference: cluster
+  immediate: true
+  cluster:
+    name: cnpg-{{ namespace }}-cluster
+---
+apiVersion: v1
+data:
+  password: {{ pgAdmin_password }}
+  user: {{ pgadmin_user }}
+kind: Secret
+metadata:  
+  name: pgadmin-password
+  namespace: {{ namespace }}
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pgadmin
+  namespace: {{ namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: pgadmin
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: pgadmin
+    spec:
+      containers:
+        - name: pgadmin
+          image: harbor.csis.raghib.net/dpage/pgadmin4:{{ pgadmin_image_version }}
+          ports:
+            - containerPort: 80
+              name: pgadminport
+          env:
+            - name: PGADMIN_DEFAULT_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: pgadmin-password
+                  key: user
+            - name: PGADMIN_DEFAULT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgadmin-password
+                  key: password
+            - name: PGADMIN_PORT
+              value: "80"
+            - name: http_proxy
+              value: http://azpse.raghib.net:9480
+            - name: https_proxy
+              value: http://azpse.raghib.net:9480
+            - name: no_proxy
+              value: 10.0.0.0/8,172.29.0.0/8,raghib.net
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pgadmin
+  labels:
+    app: pgadmin
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: pgadmin
+  type: ClusterIP
+  ports:
+    - port: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options "ALLOW-FROM *.paas-{{ cluster }}.raghib.net";
+      proxy_hide_header X-Frame-Options;
+    nginx.ingress.kubernetes.io/proxy-body-size: 2000M
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+  name: pgadmin-ingress
+  namespace: {{ namespace }}
+spec:
+  rules:
+  - host: pgadmin-{{ namespace }}-raghib.paas-{{ cluster }}.raghib.net
+    http:
+      paths:
+      - backend:
+          service:
+            name: pgadmin
+            port:
+              number: 80
+        path: /
+        pathType: Prefix
